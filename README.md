@@ -1,5 +1,4 @@
 # QuSciTech-Labs 
-
 > [Public Labs](https://github.com/jopaneur/quscitech-labs) · 
 > [Full Edition Access](https://github.com/jopaneur/quscitech-labs#-full-edition-kdp) · 
 > [Private Repo](https://github.com/jopaneur/quscitech-labs-full) · 

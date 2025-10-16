@@ -4,8 +4,9 @@
 > [Full Edition Access](https://github.com/jopaneur/quscitech-labs#-full-edition-kdp) · 
 > [Private Repo](https://github.com/jopaneur/quscitech-labs-full) · 
 > [QuSciTech.com](https://www.quscitech.com) · 
-> [Amazon KDP](https://www.amazon.com/dp/placeholder) · 
-> [DOI 10.5281/zenodo.17212825](https://doi.org/10.5281/zenodo.17212825)
+> [Amazon KDP](https://www.amazon.com/dp/placeholder) ·
+> 
+
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17212825.svg)](https://doi.org/10.5281/zenodo.17212825)
 
 Public distribution repository for  

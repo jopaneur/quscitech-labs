@@ -1,0 +1,31 @@
+A. Append DOI footer (dry run)
+
+cd "C:\Users\info\Documents\GitHub\quscitech-labs"
+python append_footer_to_notebooks.py --root . --include "Beginner_Labs/no-code/**/*.ipynb" --dry-run
+
+
+B. Apply footer for real
+
+python append_footer_to_notebooks.py --root . --include "Beginner_Labs/no-code/**/*.ipynb"
+
+
+C. Run figure helper inside a notebook
+from save_e_figure_helper import save_e_figure
+
+Then when saving a plot:
+save_e_figure("Figure E.1.1b", "P1_Lab01_E.1.1b.png",
+              subdir="Beginner_Labs/figures", fig=plt.gcf(), ax=plt.gca())
+
+
+D. Preflight QA before committing
+python repo_preflight_check.py
+
+Expected output:
+🧩 QuSciTech-Labs Preflight Check
+🔍 Checking notebook naming...
+✅ All notebook filenames follow E#_#_Title_NoCode.ipynb
+🔍 Checking footer presence...
+✅ All notebooks contain DOI footer
+🔍 Checking figure paths...
+✅ Found 5 saved figure(s).
+✅ Preflight complete.

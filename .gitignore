@@ -1,0 +1,7 @@
+
+*/notebooks/*
+**/.ipynb_checkpoints/*
+**/data/*
+**/private/*
+.DS_Store
+Thumbs.db

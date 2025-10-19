@@ -20,3 +20,9 @@ build/
 
 # Large raw assets (keep under 100MB if tracked by Git)
 assets/raw/
+# Internal system and private materials
+/system/
+/private/
+/*.log
+*.bak
+*.tmp

@@ -1,4 +1,4 @@
-# QuSciTech-Labs 
+# QuSciTech™-Labs 
 
 [Public Labs](https://github.com/jopaneur/quscitech-labs) •
 [Docs / Index](docs/Labs_INDEX_README.md) •

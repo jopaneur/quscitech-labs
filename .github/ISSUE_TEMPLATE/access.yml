@@ -1,29 +1,56 @@
 name: "Access Request"
 description: "Request access to the private QuSciTech Labs (E.1–E.3)"
-labels: ["access-request"]
+title: "Access Request: <your GitHub handle>"
+labels: ["access-request", "triage"]
+assignees: []
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Please complete all required fields. Do **not** paste sensitive payment information—only the order/receipt ID.
   - type: input
     id: name
-    attributes: { label: Full name, placeholder: "Dr. Joe Wilson" }
+    attributes: { label: "Full name", placeholder: "Your full name" }
     validations: { required: true }
   - type: input
     id: email
-    attributes: { label: Email, placeholder: "your@email.com" }
+    attributes: { label: "Email (GitHub‑associated preferred)", placeholder: "you@example.com" }
     validations: { required: true }
   - type: input
     id: github
-    attributes: { label: GitHub username, placeholder: "jopaneur" }
+    attributes: { label: "GitHub username", placeholder: "your-github-handle" }
     validations: { required: true }
   - type: input
     id: purchase
-    attributes: { label: Book purchase identifier, placeholder: "Order # / KDP receipt" }
+    attributes:
+      label: "Book purchase identifier (order # / receipt code)"
+      placeholder: "e.g., 112-1234567-1234567 (Amazon) or ABCD-1234 (other)"
     validations: { required: true }
   - type: dropdown
     id: retailer
-    attributes: { label: Retailer, options: ["Amazon KDP","Other"] }
+    attributes:
+      label: "Retailer"
+      options: ["Amazon KDP", "Google Play Books", "Leanpub", "Other"]
+    validations: { required: true }
   - type: dropdown
     id: scope
-    attributes: { label: Requested scope, options: ["E.1–E.3 (Full)","E.2–E.3","Course adoption"] }
+    attributes:
+      label: "Requested scope"
+      options:
+        - "E.1 (Beginner Only)"
+        - "E.2–E.3 (Intermediate–Advanced)"
+        - "E.1–E.3 (Full)"
+        - "Course Adoption (Instructor Pack)"
+    validations: { required: true }
   - type: textarea
     id: notes
-    attributes: { label: Notes (optional), placeholder: "Course affiliation, timeline, etc." }
+    attributes:
+      label: "Notes (optional)"
+      placeholder: "Course affiliation, timeline, context, etc."
+  - type: checkboxes
+    id: tos
+    attributes:
+      label: "Terms"
+      options:
+        - label: "I agree to the QuSciTech Labs Terms of Use and private repo guidelines."
+          required: true

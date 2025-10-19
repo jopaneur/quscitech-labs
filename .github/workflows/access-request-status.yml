@@ -1,5 +1,4 @@
-name: Access Request Status Follow-up
-
+name: Access Request — Status Follow‑ups
 on:
   issues:
     types: [labeled]
@@ -8,38 +7,21 @@ permissions:
   issues: write
 
 jobs:
-  followup:
-    if: >
-      github.event.label.name == 'approved' ||
-      github.event.label.name == 'needs-more-info' ||
-      github.event.label.name == 'declined'
+  followups:
+    if: github.event.issue.state == 'open' && contains(fromJson('["approved","needs-verification","denied"]'), github.event.label.name)
     runs-on: ubuntu-latest
     steps:
-      - name: Post status-specific guidance
+      - name: Comment on status
         uses: actions/github-script@v7
         with:
           script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const issue_number = context.payload.issue.number;
-            const label = context.payload.label.name;
-            let body = '';
-
+            const label = context.payload.label.name
+            let body = ''
             if (label === 'approved') {
-              body = `
-✅ **Approved** — Next steps:
-- Maintainer: Send repository invite to the requester's GitHub handle via **Settings → Collaborators & teams** on \`quscitech-labs-full\`.
-- Paste the invite link here (optional) and mention the requester so they’re notified.
-- Close this issue after the requester confirms access.
-`;
-            } else if (label === 'needs-more-info') {
-              body = `
-ℹ️ **Needs more info** — Please provide the missing details (e.g., purchase ID, GitHub handle, scope).  
-Maintainer: list the specific items needed and re-label when complete.`;
-            } else if (label === 'declined') {
-              body = `
-❌ **Declined** — Maintainer: briefly note the reason (unable to verify purchase, mismatched account, etc.).  
-Requester may reopen with additional documentation.`;
+              body = '🎉 Your request is **approved**. An invitation to the private labs will be sent shortly.'
+            } else if (label === 'needs-verification') {
+              body = '🟡 Your request needs manual verification. A maintainer will follow up soon.'
+            } else if (label === 'denied') {
+              body = '❌ Your request was denied. If you believe this is in error, please reply with additional details.'
             }
-
-            await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            await github.rest.issues.createComment({...context.repo, issue_number: context.issue.number, body})

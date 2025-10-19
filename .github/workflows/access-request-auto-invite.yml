@@ -1,88 +1,49 @@
-name: Access Request Auto-Invite
-
+name: Access Request — Auto‑Invite on Approval
 on:
   issues:
     types: [labeled]
 
 permissions:
   issues: write
+  contents: read
 
 env:
-  INVITE_OWNER: jopaneur              # change if the private repo owner is different
-  INVITE_REPO: quscitech-labs-full    # private repo to invite users to
-  DEFAULT_PERMISSION: pull            # pull=read; options: pull | triage | push | maintain
+  TARGET_REPO:  ${{ secrets.TARGET_REPO }}   # e.g., jopaneur/quscitech-labs-full
 
 jobs:
-  auto_invite:
-    if: github.event.label.name == 'approved'
+  invite:
+    if: github.event.label.name == 'approved' && env.TARGET_REPO != ''
     runs-on: ubuntu-latest
-
     steps:
-      - name: Resolve GitHub handle from issue
-        id: resolve
+      - name: Parse handle from issue
+        id: parse
         uses: actions/github-script@v7
         with:
           script: |
-            const issue = context.payload.issue;
+            const body = context.payload.issue.body || "";
+            const m = body.match(/\*\*GitHub username\*\*[\s\S]*?\n\n([^\n]+)/i);
+            const gh = m ? m[1].trim().replace(/^@/, '') : '';
+            core.setOutput('handle', gh);
+            core.info(`Handle: ${gh}`);
 
-            // 1) Try to extract a GitHub handle from the issue body (from the issue form)
-            //    Look for either "GitHub username:" lines or @mentions.
-            const body = issue.body || '';
-            let handle = null;
-
-            // a) From "GitHub username:" like "GitHub username: jopaneur" or "@jopaneur"
-            const m1 = body.match(/GitHub\s*username\s*:\s*@?([A-Za-z0-9-]+)/i);
-            if (m1) handle = m1[1];
-
-            // b) Else, any @mention in the body
-            if (!handle) {
-              const m2 = body.match(/@([A-Za-z0-9-]+)/);
-              if (m2) handle = m2[1];
-            }
-
-            // c) Fallback to the issue author
-            if (!handle) handle = issue.user.login;
-
-            core.setOutput('handle', handle);
-
-      - name: Invite requester to private repo
-        id: invite
-        uses: actions/github-script@v7
+      - name: Send invite to private repo
+        if: steps.parse.outputs.handle != ''
         env:
-          GH_TOKEN: ${{ secrets.PRIVATE_LABS_TOKEN }}
-        with:
-          github-token: ${{ env.GH_TOKEN }}
-          script: |
-            const owner   = process.env.INVITE_OWNER;
-            const repo    = process.env.INVITE_REPO;
-            const perm    = process.env.DEFAULT_PERMISSION || 'pull';
-            const handle  = core.getInput('handle', { required: false }) || '${{ steps.resolve.outputs.handle }}';
+          GH_TOKEN: ${{ secrets.INVITER_TOKEN }}
+        run: |
+          set -e
+          HANDLE="${{ steps.parse.outputs.handle }}"
+          REPO="${TARGET_REPO}"
+          echo "Inviting $HANDLE to $REPO ..."
+          gh api -X PUT "repos/$REPO/collaborators/$HANDLE" -f permission=pull
+          echo "Invitation sent."
 
-            // Add collaborator (sends an invitation for private repos)
-            // Docs: https://docs.github.com/en/rest/collaborators/invitations?apiVersion=2022-11-28#add-a-repository-collaborator
-            const res = await github.rest.repos.addCollaborator({
-              owner, repo, username: handle, permission: perm
-            });
-
-            core.setOutput('status', res.status);
-            core.setOutput('handle', handle);
-
-      - name: Comment with invite result
+      - name: Comment result
         uses: actions/github-script@v7
         with:
           script: |
-            const owner = context.repo.owner;
-            const repo  = context.repo.repo;
-            const issue_number = context.payload.issue.number;
-
-            const status = '${{ steps.invite.outputs.status }}';
-            const handle = '${{ steps.invite.outputs.handle }}';
-
-            let msg = '';
-            if (status === '201' || status === '204') {
-              msg = `✅ **Invitation sent** to @${handle} for \`${process.env.INVITE_OWNER}/${process.env.INVITE_REPO}\` (permission: \`${process.env.DEFAULT_PERMISSION}\`).`;
-            } else {
-              msg = `⚠️ Could not send invite automatically (status: ${status}). Check token scope, repo ownership, or if @${handle} is already a collaborator.`;
-            }
-
-            await github.rest.issues.createComment({ owner, repo, issue_number, body: msg });
+            const handle = '${{ steps.parse.outputs.handle }}'
+            const msg = handle
+              ? `📨 Invitation sent to **@${handle}** for **${process.env.TARGET_REPO}**.`
+              : `⚠️ Unable to parse GitHub handle from the issue. Please invite manually.`
+            await github.rest.issues.createComment({...context.repo, issue_number: context.issue.number, body: msg})

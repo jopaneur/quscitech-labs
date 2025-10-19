@@ -1,57 +1,137 @@
-name: Access Request Triage
-
+name: Access Request — Triage & Auto‑Verify
 on:
   issues:
-    types: [opened, labeled]
+    types: [opened, edited, labeled]
 
 permissions:
   issues: write
+  contents: read
+
+env:
+  LICENSES_REPO: ${{ secrets.LICENSES_REPO }}            # e.g., jopaneur/quscitech-licenses
+  LICENSES_PATH: ${{ secrets.LICENSES_PATH }}            # e.g., data/allowlist.csv
+  TARGET_REPO:  ${{ secrets.TARGET_REPO }}               # e.g., jopaneur/quscitech-labs-full
 
 jobs:
   triage:
-    if: >
-      (github.event.action == 'opened' &&
-       contains(join(github.event.issue.labels.*.name, ','), 'access-request')) ||
-      (github.event.action == 'labeled' &&
-       github.event.label.name == 'access-request')
+    if: |
+      github.event.issue.state == 'open' &&
+      (contains(github.event.issue.labels.*.name, 'access-request') ||
+       endsWith(github.event.issue.title, 'Access Request'))
     runs-on: ubuntu-latest
     steps:
-      - name: Assign, label, and comment
+      - name: Parse issue form
+        id: parse
         uses: actions/github-script@v7
         with:
           script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const issue_number = context.payload.issue.number;
-            const requester = context.payload.issue.user.login;
+            const body = context.payload.issue.body || "";
+            function pick(label){
+              const rx = new RegExp(`(?<=^|\n)${label}\s*\n\s*`, 'i');
+              const idx = body.search(rx);
+              if(idx < 0) return "";
+              const rest = body.slice(idx).split("\n").slice(1);
+              const stop = rest.findIndex(l => /^\s*\*\*.+\*\*\s*$/.test(l));
+              const chunk = rest.slice(0, stop >= 0 ? stop : undefined).join("\n").trim();
+              return chunk.replace(/^>\s*/gm,"").trim();
+            }
+            const data = {
+              name:   pick("**Full name**"),
+              email:  pick("**Email"),
+              github: pick("**GitHub username**"),
+              purchase: pick("**Book purchase identifier"),
+              retailer: pick("**Retailer**"),
+              scope:  pick("**Requested scope**"),
+              notes:  pick("**Notes")
+            };
+            core.setOutput("json", JSON.stringify(data));
+            core.info(`Parsed: ${JSON.stringify(data)}`);
 
-            // Add helper label
-            await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['needs-verification'] }).catch(()=>{});
+      - name: Fail if GitHub handle is missing
+        if: steps.parse.outputs.json == '' || fromJSON(steps.parse.outputs.json).github == ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.setFailed("Missing GitHub handle — cannot continue triage.")
 
-            // Assign to maintainer
-            await github.rest.issues.addAssignees({ owner, repo, issue_number, assignees: ['jopaneur'] }).catch(()=>{});
+      - name: Fetch license allow‑list CSV
+        id: fetch
+        env:
+          GH_TOKEN: ${{ secrets.LICENSES_REPO_TOKEN }}
+        run: |
+          if [ -z "${LICENSES_REPO}" ] || [ -z "${LICENSES_PATH}" ]; then
+            echo "skip_fetch=1" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          gh api repos/${LICENSES_REPO}/contents/${LICENSES_PATH}             -H "Accept: application/vnd.github.raw" > allowlist.csv
+          echo "skip_fetch=0" >> $GITHUB_OUTPUT
+          echo "Downloaded allowlist.csv"
 
-            // Checklist comment
-            const body = `
-Hi @jopaneur — new **Private Labs access request** from @${requester}.
+      - name: Verify purchase identifier against allow‑list
+        id: verify
+        run: |
+          set -e
+          DATA='${{ steps.parse.outputs.json }}'
+          PID=$(echo "$DATA" | jq -r '.purchase' | tr -d '\r\n' )
+          if [ "${{ steps.fetch.outputs.skip_fetch }}" = "1" ]; then
+            echo "verified=false" >> $GITHUB_OUTPUT
+            echo "reason=No allow-list configured" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          if [ -z "$PID" ]; then
+            echo "verified=false" >> $GITHUB_OUTPUT
+            echo "reason=No purchase id" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          if grep -qi "$PID" allowlist.csv ; then
+            echo "verified=true" >> $GITHUB_OUTPUT
+            echo "reason=Found on allow-list" >> $GITHUB_OUTPUT
+          else
+            echo "verified=false" >> $GITHUB_OUTPUT
+            echo "reason=Not found on allow-list" >> $GITHUB_OUTPUT
+          fi
 
-### Maintainer Checklist
-- [ ] Verify **purchase identifier** (KDP receipt / order #)
-- [ ] Confirm **GitHub username** matches requester
-- [ ] Confirm **email** (if provided)
-- [ ] Validate **requested scope** (E.1–E.3 Full / E.2–E.3 / Course adoption)
-- [ ] Decision:
-  - [ ] Approved
-  - [ ] Needs more info (ask clarifying questions)
-  - [ ] Declined (note reason)
-- [ ] If approved: **Invite to private repo** \`quscitech-labs-full\`
-  - [ ] Invitation sent
-  - [ ] Access confirmed by requester
-- [ ] Close issue when complete
+      - name: Apply scope label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const data = JSON.parse('${{ steps.parse.outputs.json }}');
+            const scope = (data.scope || '').toLowerCase();
+            let label = 'scope:unknown';
+            if (scope.includes('beginner')) label = 'scope:E1';
+            else if (scope.includes('intermediate')) label = 'scope:E2-E3';
+            else if (scope.includes('full')) label = 'scope:E1-E3';
+            else if (scope.includes('instructor')) label = 'scope:instructor';
+            await github.rest.issues.addLabels({
+              ...context.repo,
+              issue_number: context.issue.number,
+              labels: [label]
+            });
 
-**Quick links**
-- Private repo (about): https://github.com/jopaneur/quscitech-labs-full
-- Zenodo concept DOI: https://doi.org/10.5281/zenodo.17212825
+      - name: Add status label based on verification
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ok = '${{ steps.verify.outputs.verified }}' === 'true';
+            const label = ok ? 'approved' : 'needs-verification';
+            await github.rest.issues.addLabels({
+              ...context.repo,
+              issue_number: context.issue.number,
+              labels: [label]
+            });
 
-<sub>_Auto-generated by Access Request Triage._</sub>`;
-            await github.rest.issues.createComment({ owner, repo, issue_number, body });
+      - name: Post triage comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ok = '${{ steps.verify.outputs.verified }}' === 'true';
+            const why = '${{ steps.verify.outputs.reason }}';
+            const data = JSON.parse('${{ steps.parse.outputs.json }}');
+            const msg = ok
+              ? `✅ Auto‑verified purchase for **@${data.github}**. Labeling **approved**.`
+              : `🟡 Could not auto‑verify purchase id. Reason: _${why}_. Labeling **needs‑verification** for moderator review.`;
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body: msg
+            });

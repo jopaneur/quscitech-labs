@@ -11,10 +11,10 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17212825.svg)](https://doi.org/10.5281/zenodo.17212825)
 
 - Public distribution repository for *Quantum AI Systems: Theory, Architecture, and Applications*  
-- By **Dr. Joe Wilson — © 2025 All Rights Reserved** • Publisher: **QuSciTech Press**
+- By **Dr. Joe Wilson — © 2025 All Rights Reserved** • Publisher: **QuSciTech Press™**
 + **Public Distribution Repository** for  
 + *Quantum AI Systems: Theory, Architecture, and Applications*  
-+ by **Dr. Joe Wilson — © 2025 All Rights Reserved** • Publisher: **QuSciTech Press**
++ by **Dr. Joe Wilson — © 2025 All Rights Reserved** • Publisher: **QuSciTech Press™**
 
 This repo hosts:
 - 🟢 **Beginner Labs (E.1)** — Public **No‑Code** notebooks with precomputed outputs.
@@ -58,7 +58,7 @@ After verification, you will receive a GitHub invitation to join the private rep
 👉 https://github.com/jopaneur/quscitech-labs-full
 
 **Official DOI:** https://doi.org/10.5281/zenodo.17212825  
-© 2025 Dr. Joe Wilson — QuSciTech Press. All rights reserved.
+© 2025 Dr. Joe Wilson — QuSciTech™. All rights reserved.
 
 ---
 
@@ -78,4 +78,4 @@ Full **Code‑Enabled** and expanded **No‑Code** editions available via **Amaz
 
 **Official DOI:** [10.5281/zenodo.17212825](https://doi.org/10.5281/zenodo.17212825)  
 **Companion Repository:** quscitech-labs  
-**Publisher:** QuSciTech Press
+**Publisher:** QuSciTech Press™

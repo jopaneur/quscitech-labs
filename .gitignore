@@ -1,28 +1,94 @@
+###############################################################
+#  QuSciTech-Labs Standard .gitignore
+#  (© 2025 Dr. Joe Wilson — QuSciTech Press)
+#  Purpose: Protect internal data, enable public workflows
+###############################################################
 
-*/notebooks/*
-**/.ipynb_checkpoints/*
-**/data/*
-**/private/*
+# ============================================================
+# 🧩 1. Core Git and System Hygiene
+# ============================================================
+
+# macOS and Windows clutter
 .DS_Store
 Thumbs.db
-# Python / notebooks
-__pycache__/
-.ipynb_checkpoints/
+desktop.ini
 
-# Editors
-.vscode/
-.idea/
-
-# Build artifacts
-dist/
-build/
-*.log
-
-# Large raw assets (keep under 100MB if tracked by Git)
-assets/raw/
-# Internal system and private materials
-/system/
-/private/
-/*.log
+# Temporary or backup files
 *.bak
 *.tmp
+*.log
+*.swp
+*.lock
+
+# Python cache and artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg/
+dist/
+build/
+.env
+venv/
+.venv/
+.cache/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# ============================================================
+# 🔒 2. Private/Internal Folders
+# ============================================================
+
+# System-level internal docs (verification procedures, admin notes)
+system/
+
+# Future private content (tokens, partner credentials)
+private/
+
+# Local-only automation and draft directories
+local/
+drafts/
+backups/
+
+# ============================================================
+# 📚 3. Public Documentation and Deployment (Keep Visible)
+# ============================================================
+!.github/
+!.github/workflows/
+!.github/ISSUE_TEMPLATE/
+!docs/
+!helpers/
+!Beginner_Labs/
+!Intermediate_Labs/
+!Advanced_Labs/
+!LICENSE
+!README.md
+!Labs_MASTER_README.md
+
+# ============================================================
+# ⚙️ 4. OS/IDE Metadata (Auto-generated)
+# ============================================================
+.vscode/
+.idea/
+*.iml
+*.suo
+*.user
+*.sln.docstates
+
+# ============================================================
+# 🧪 5. Large Assets (Optional Local Exclusion)
+# ============================================================
+# Ignore raw experiment data >100MB (handled in private repo)
+assets/raw/
+data/
+datasets/
+
+###############################################################
+#  ✅ Notes
+#  Keep this .gitignore version-controlled for consistency.
+#  Confirm hidden files with: git status
+#  Visible files should only include those necessary for
+#  public documentation, labs, and GitHub Actions.
+###############################################################

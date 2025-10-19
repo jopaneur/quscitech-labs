@@ -5,3 +5,18 @@
 **/private/*
 .DS_Store
 Thumbs.db
+# Python / notebooks
+__pycache__/
+.ipynb_checkpoints/
+
+# Editors
+.vscode/
+.idea/
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# Large raw assets (keep under 100MB if tracked by Git)
+assets/raw/

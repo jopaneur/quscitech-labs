@@ -1,0 +1,40 @@
+name: Deploy to QuSciTech (SFTP)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server: ${{ secrets.SFTP_HOST }}
+          username: ${{ secrets.SFTP_USER }}
+          password: ${{ secrets.SFTP_PASSWORD }}
+          local_path: './public/'
+          remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
+          sftp_only: true
+          args: '-o StrictHostKeyChecking=no'
+
+      - name: Send deploy email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
+          to: ${{ secrets.MAIL_TO }}
+          from: ${{ secrets.MAIL_FROM }}
+          secure: true
+          body: |
+            ✅ Deployment completed to ${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_REMOTE_DIR }}
+            Repo: ${{ github.repository }}
+            Commit: ${{ github.sha }}
+            By: ${{ github.actor }}

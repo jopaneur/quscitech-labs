@@ -1,0 +1,216 @@
+name: Build • Release • SFTP Deploy (Instructors)
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Optional: tag name (e.g., v2025.10.22). If blank, no tag/release is created.'
+        required: false
+        default: ''
+      pre_release:
+        description: 'Mark GitHub release as pre-release?'
+        required: true
+        default: 'false'
+  push:
+    tags:
+      - 'v*'  # Any tag starting with v will auto-release & deploy
+
+permissions:
+  contents: write    # needed for gh-release
+  actions: read
+
+env:
+  BUILD_DIR: build/instructors
+  ARTEFACTS_DIR: build/artefacts
+  ZIP_NAME: QST_Instructor_Resources.zip
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🧰 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install tooling (zip, libreoffice-headless)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip libreoffice-writer libreoffice-impress libreoffice-calc libreoffice-core libreoffice-java-common libreoffice-help-en-us
+
+      - name: 📁 Prepare folders
+        run: |
+          mkdir -p "${{ env.BUILD_DIR }}"
+          mkdir -p "${{ env.ARTEFACTS_DIR }}"
+          mkdir -p scripts
+
+      - name: 🧪 Provide packaging helper script
+        run: |
+          cat > scripts/package_instructor_assets.py << 'PY'
+          import os, shutil, subprocess, sys
+          from pathlib import Path
+
+          SRC_HINTS = [
+              "instructors", "Instructor", "INST", "assets/instructors",
+              "materials/instructors", "docs/instructors"
+          ]
+          build_dir = Path(os.environ.get("BUILD_DIR", "build/instructors")).resolve()
+          artefacts_dir = Path(os.environ.get("ARTEFACTS_DIR", "build/artefacts")).resolve()
+          build_dir.mkdir(parents=True, exist_ok=True)
+          artefacts_dir.mkdir(parents=True, exist_ok=True)
+
+          repo_root = Path(".").resolve()
+          candidates = []
+          for hint in SRC_HINTS:
+              p = repo_root / hint
+              if p.exists():
+                  candidates.append(p)
+
+          # Fallback: collect common instructor-friendly files anywhere under repo
+          exts = {".pdf", ".pptx", ".ppt", ".docx", ".xlsx", ".csv", ".md"}
+          for p in repo_root.rglob("*"):
+              if p.is_file() and p.suffix.lower() in exts and "build" not in str(p):
+                  candidates.append(p)
+
+          # De-duplicate paths
+          uniq = []
+          seen = set()
+          for p in candidates:
+              s = str(p.resolve())
+              if s not in seen:
+                  uniq.append(p)
+                  seen.add(s)
+
+          # Copy candidates into build_dir preserving relative structure (where possible)
+          for p in uniq:
+              if p.is_dir():
+                  # copy dir subtree
+                  rel = p.relative_to(repo_root)
+                  dest = build_dir / rel
+                  if not dest.exists():
+                      shutil.copytree(p, dest, dirs_exist_ok=True)
+              else:
+                  rel = p.relative_to(repo_root)
+                  dest = build_dir / rel
+                  dest.parent.mkdir(parents=True, exist_ok=True)
+                  shutil.copy2(p, dest)
+
+          # Convert any .docx/.ppt/.pptx to PDF using libreoffice headless (best effort)
+          def lo_convert(src: Path):
+              try:
+                  subprocess.run(
+                      ["soffice", "--headless", "--convert-to", "pdf", "--outdir", str(src.parent), str(src)],
+                      check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                  )
+                  return True
+              except Exception as e:
+                  print(f"[WARN] LibreOffice conversion failed for {src}: {e}")
+                  return False
+
+          to_convert = list(build_dir.rglob("*.docx")) + list(build_dir.rglob("*.pptx")) + list(build_dir.rglob("*.ppt"))
+          for f in to_convert:
+              lo_convert(f)
+
+          # Gather final artefacts: all PDFs + native PPTX + key DOCX + CSV/ZIPs
+          wanted_exts = {".pdf", ".pptx", ".zip", ".csv"}
+          for f in build_dir.rglob("*"):
+              if f.is_file() and f.suffix.lower() in wanted_exts:
+                  dst = artefacts_dir / f.name
+                  shutil.copy2(f, dst)
+
+          # Create instructor mega ZIP
+          zip_name = os.environ.get("ZIP_NAME", "QST_Instructor_Resources.zip")
+          zip_path = artefacts_dir / zip_name
+          if zip_path.exists():
+              zip_path.unlink()
+          shutil.make_archive(str(zip_path.with_suffix("")), "zip", root_dir=build_dir)
+
+          print(f"[OK] Built artefacts in {artefacts_dir}")
+          PY
+
+      - name: 🏗️ Build & package artefacts
+        env:
+          BUILD_DIR: ${{ env.BUILD_DIR }}
+          ARTEFACTS_DIR: ${{ env.ARTEFACTS_DIR }}
+          ZIP_NAME: ${{ env.ZIP_NAME }}
+        run: |
+          python3 scripts/package_instructor_assets.py
+          ls -lah "${{ env.ARTEFACTS_DIR }}"
+
+      - name: 💾 Upload workflow artefacts (for debugging / record)
+        uses: actions/upload-artifact@v4
+        with:
+          name: instructors-artefacts
+          path: |
+            ${{ env.ARTEFACTS_DIR }}/*
+            !${{ env.ARTEFACTS_DIR }}/*.md
+          if-no-files-found: warn
+          retention-days: 14
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') }}
+    steps:
+      - name: 📥 Download artefacts from build
+        uses: actions/download-artifact@v4
+        with:
+          name: instructors-artefacts
+          path: artefacts
+
+      - name: 🏷️ Create or update GitHub Release (triggers Zenodo)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name || github.event.inputs.release_tag }}
+          name: ${{ github.ref_name || github.event.inputs.release_tag }}
+          draft: false
+          prerelease: ${{ github.event.inputs.pre_release == 'true' }}
+          files: |
+            artefacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Download artefacts from build
+        uses: actions/download-artifact@v4
+        with:
+          name: instructors-artefacts
+          path: artefacts
+
+      - name: 🚀 SFTP Deploy to VPS
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          username: ${{ secrets.SFTP_USER }}
+          server: ${{ secrets.SFTP_HOST }}
+          port: 22
+          password: ${{ secrets.SFTP_PASSWORD }}
+          local_path: 'artefacts/*'
+          remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
+          sftp_only: true
+          # clean_remote: false  # set true if you want to wipe target before upload
+
+      - name: ✉️ Optional email notice
+        if: ${{ secrets.SMTP_HOST != '' && secrets.MAIL_FROM != '' && secrets.MAIL_TO != '' }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "QuSciTech Instructors: Build & Deploy complete on ${{ github.repository }}"
+          from: ${{ secrets.MAIL_FROM }}
+          to: ${{ secrets.MAIL_TO }}
+          secure: true
+          body: |
+            Repo: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Run: ${{ github.run_id }}
+            Commit/Tag: ${{ github.ref }}
+            Deployed to: ${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_REMOTE_DIR }}
+

@@ -3,6 +3,7 @@ name: Deploy to QuSciTech (SFTP) + Smoke Test
 on:
   push:
     branches: [ main ]
+  workflow_dispatch: {}   # allow manual runs from the Actions tab
 
 env:
   WEB_HOSTNAME: quscitech.com
@@ -16,27 +17,51 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ---- Sanity checks so we fail early with helpful logs ----
+      - name: Debug: verify deploy source exists
+        run: |
+          echo "PWD: $(pwd)"
+          echo "Top-level files:"
+          ls -la
+          echo "Checking ./public/ ..."
+          if [ ! -d "./public" ]; then
+            echo "❌ ./public folder not found. Create it and add your site files (e.g., public/hello-ci.html)."
+            exit 1
+          fi
+          echo "public/ contents:"
+          ls -la public
+          # ensure at least one regular file exists
+          if [ -z "$(find public -type f -maxdepth 1)" ]; then
+            echo "❌ ./public exists but has no files to upload."
+            exit 1
+          fi
+          # ensure smoke file exists so curl check is meaningful
+          if [ ! -f "public/hello-ci.html" ]; then
+            echo "⚠️  public/hello-ci.html not found; curl step will likely fail. Consider adding it."
+          fi
+
       - name: Upload via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.SFTP_HOST }}
           username: ${{ secrets.SFTP_USER }}
           password: ${{ secrets.SFTP_PASSWORD }}
-          local_path: './public/'          # change if your deploy folder is different
-          remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
+          local_path: './public/'              # <- deploy source in your repo
+          remote_path: ${{ secrets.SFTP_REMOTE_DIR }}  # /home/quscitech/public_html/instructors/QST-INST-2025/resources/
           sftp_only: true
-          args: '-o StrictHostKeyChecking=no'
+          args: '-o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=5'
 
       # Pre-DNS + Post-DNS compatible smoke test:
-      # --resolve forces the request to your VPS IP while using the domain's vhost.
+      # --resolve forces Host header to quscitech.com while hitting your VPS IP.
       - name: Verify file reachable (curl smoke test with retry)
         env:
           VPS_IP: ${{ secrets.VPS_IP }}
         run: |
           set -e
-          echo "Checking https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
+          URL="https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
+          echo "Checking $URL"
           for i in {1..8}; do
-            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"; then
+            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
               echo "✅ Smoke test passed"
               exit 0
             fi
@@ -58,7 +83,7 @@ jobs:
           from: ${{ secrets.MAIL_FROM }}
           secure: true
           body: |
-            ✅ Deployment completed to ${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_REMOTE_DIR }}
+            ✅ Deployment to ${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_REMOTE_DIR }} completed.
             🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
             Repo: ${{ github.repository }}
             Commit: ${{ github.sha }}

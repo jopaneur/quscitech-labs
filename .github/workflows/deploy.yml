@@ -6,9 +6,9 @@ on:
     branches:
       - main
     paths:
-      - 'public/**'                    # Deploy only when site files change
-      - '.github/workflows/deploy.yml' # Or when the workflow changes
-  workflow_dispatch: {}                # Manual “Run workflow” button
+      - 'public/**'                     # Deploy only when site files change
+      - '.github/workflows/deploy.yml'  # Or when the workflow changes
+  workflow_dispatch: {}                 # Manual “Run workflow” button
 
 env:
   WEB_HOSTNAME: quscitech.com
@@ -22,15 +22,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-        - name: Probe SFTP port 22
-  run: |
-    HOST="${{ secrets.SFTP_HOST }}"
-    echo "Probing $HOST:22 ..."
-    if timeout 5 bash -c "cat < /dev/null > /dev/tcp/$HOST/22"; then
-      echo "✅ Port 22 reachable"
-    else
-      echo "❌ Port 22 NOT reachable"; exit 1
-    fi
+      - name: Probe SFTP port 22
+        run: |
+          set -e
+          HOST="${{ secrets.SFTP_HOST }}"
+          echo "Probing $HOST:22 ..."
+          if timeout 5 bash -c "cat < /dev/null > /dev/tcp/$HOST/22"; then
+            echo "✅ Port 22 reachable"
+          else
+            echo "❌ Port 22 NOT reachable"; exit 1
+          fi
 
       - name: Upload via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
@@ -38,10 +39,10 @@ jobs:
           server: ${{ secrets.SFTP_HOST }}
           username: ${{ secrets.SFTP_USER }}
           password: ${{ secrets.SFTP_PASSWORD }}
-          local_path: './public/'
+          local_path: ./public/
           remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
           sftp_only: true
-          args: '-o StrictHostKeyChecking=no'
+          args: -o StrictHostKeyChecking=no
 
       - name: Verify file reachable (curl smoke test with retry)
         env:
@@ -50,7 +51,8 @@ jobs:
           set -e
           echo "Checking https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
           for i in {1..8}; do
-            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"; then
+            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" \
+               "https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"; then
               echo "✅ Smoke test passed"
               exit 0
             fi

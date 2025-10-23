@@ -22,6 +22,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+        - name: Probe SFTP port 22
+  run: |
+    HOST="${{ secrets.SFTP_HOST }}"
+    echo "Probing $HOST:22 ..."
+    if timeout 5 bash -c "cat < /dev/null > /dev/tcp/$HOST/22"; then
+      echo "✅ Port 22 reachable"
+    else
+      echo "❌ Port 22 NOT reachable"; exit 1
+    fi
+
       - name: Upload via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:

@@ -1,12 +1,17 @@
-name: Deploy to QuSciTech (SFTP)
+name: Deploy to QuSciTech (SFTP) + Smoke Test
 
 on:
   push:
     branches: [ main ]
 
+env:
+  WEB_HOSTNAME: quscitech.com
+  SMOKE_PATH: instructors/QST-INST-2025/resources/hello-ci.html
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,10 +22,29 @@ jobs:
           server: ${{ secrets.SFTP_HOST }}
           username: ${{ secrets.SFTP_USER }}
           password: ${{ secrets.SFTP_PASSWORD }}
-          local_path: './public/'
+          local_path: './public/'          # change if your deploy folder is different
           remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
           sftp_only: true
           args: '-o StrictHostKeyChecking=no'
+
+      # Pre-DNS + Post-DNS compatible smoke test:
+      # --resolve forces the request to your VPS IP while using the domain's vhost.
+      - name: Verify file reachable (curl smoke test with retry)
+        env:
+          VPS_IP: ${{ secrets.VPS_IP }}
+        run: |
+          set -e
+          echo "Checking https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
+          for i in {1..8}; do
+            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"; then
+              echo "✅ Smoke test passed"
+              exit 0
+            fi
+            echo "⏳ Waiting and retrying ($i/8)..."
+            sleep 5
+          done
+          echo "❌ Smoke test failed: file not reachable" >&2
+          exit 1
 
       - name: Send deploy email
         uses: dawidd6/action-send-mail@v3
@@ -35,6 +59,7 @@ jobs:
           secure: true
           body: |
             ✅ Deployment completed to ${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_REMOTE_DIR }}
+            🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
             Repo: ${{ github.repository }}
             Commit: ${{ github.sha }}
             By: ${{ github.actor }}

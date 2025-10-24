@@ -1,14 +1,12 @@
 name: Deploy to QuSciTech (SFTP) + Smoke Test
 
-# ✅ Trigger rules
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
     paths:
       - 'public/**'                     # Deploy only when site files change
       - '.github/workflows/deploy.yml'  # Or when the workflow changes
-  workflow_dispatch: {}                 # Manual “Run workflow” button
+  workflow_dispatch: {}
 
 env:
   WEB_HOSTNAME: quscitech.com
@@ -19,40 +17,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: 🧰 Checkout
         uses: actions/checkout@v4
 
-      - name: Probe SFTP port 22
+      - name: 📝 Ensure smoke-test file exists (creates ./public/hello-ci.html if missing)
+        run: |
+          mkdir -p public
+          if [ ! -f public/hello-ci.html ]; then
+            cat > public/hello-ci.html <<'HTML'
+            <!doctype html>
+            <meta charset="utf-8">
+            <title>QuSciTech CI Smoke Test</title>
+            <h1>✅ CI/CD is working</h1>
+            <p>Built at: $(date -u)</p>
+            HTML
+          fi
+
+      - name: 🔎 Probe SFTP port 22
         run: |
           set -e
           HOST="${{ secrets.SFTP_HOST }}"
           echo "Probing $HOST:22 ..."
-          if timeout 5 bash -c "cat < /dev/null > /dev/tcp/$HOST/22"; then
+          if timeout 5 bash -lc "cat < /dev/null > /dev/tcp/$HOST/22"; then
             echo "✅ Port 22 reachable"
           else
             echo "❌ Port 22 NOT reachable"; exit 1
           fi
 
-      - name: Upload via SFTP
+      - name: 📤 Upload via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server: ${{ secrets.SFTP_HOST }}
+          server:   ${{ secrets.SFTP_HOST }}
           username: ${{ secrets.SFTP_USER }}
           password: ${{ secrets.SFTP_PASSWORD }}
           local_path: ./public/
-          remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
+          remote_path: ${{ secrets.SFTP_REMOTE_DIR }}   # e.g. /home/quscitech/public_html/instructors/QST-INST-2025/resources/
           sftp_only: true
           args: -o StrictHostKeyChecking=no
 
-      - name: Verify file reachable (curl smoke test with retry)
+      - name: 🌐 Verify file reachable (curl smoke test with retry)
         env:
           VPS_IP: ${{ secrets.VPS_IP }}
         run: |
           set -e
-          echo "Checking https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
+          URL="https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
+          echo "Checking $URL"
           for i in {1..8}; do
-            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" \
-               "https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"; then
+            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
               echo "✅ Smoke test passed"
               exit 0
             fi
@@ -62,17 +73,22 @@ jobs:
           echo "❌ Smoke test failed: file not reachable" >&2
           exit 1
 
-      - name: Send deploy email
+      - name: ✉️ Send deploy email (TLS auto-mode)
+        if: ${{ secrets.SMTP_HOST && secrets.SMTP_PORT && secrets.SMTP_USERNAME && secrets.SMTP_PASSWORD && secrets.MAIL_FROM && secrets.MAIL_TO }}
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: ${{ secrets.SMTP_HOST }}
-          server_port: ${{ secrets.SMTP_PORT }}
-          username: ${{ secrets.SMTP_USERNAME }}
-          password: ${{ secrets.SMTP_PASSWORD }}
+          server_port:    ${{ secrets.SMTP_PORT }}
+          username:       ${{ secrets.SMTP_USERNAME }}
+          password:       ${{ secrets.SMTP_PASSWORD }}
+          from:           ${{ secrets.MAIL_FROM }}
+          to:             ${{ secrets.MAIL_TO }}
           subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
-          to: ${{ secrets.MAIL_TO }}
-          from: ${{ secrets.MAIL_FROM }}
-          secure: true
+          # TLS pairing logic:
+          secure:  ${{ secrets.SMTP_PORT == '465' }}   # implicit SSL when 465
+          starttls: ${{ secrets.SMTP_PORT == '587' }}  # STARTTLS when 587
+          # If your cPanel/Exim cert CN mismatch ever bites, temporarily uncomment:
+          # ignore_cert: true
           body: |
             ✅ Deployment completed to ${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_REMOTE_DIR }}
             🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}

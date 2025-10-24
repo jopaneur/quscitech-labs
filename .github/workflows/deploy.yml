@@ -4,8 +4,8 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'public/**'                     # Deploy only when site files change
-      - '.github/workflows/deploy.yml'  # Or when the workflow changes
+      - 'public/**'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch: {}
 
 env:
@@ -20,18 +20,15 @@ jobs:
       - name: 🧰 Checkout
         uses: actions/checkout@v4
 
-      - name: 📝 Ensure smoke-test file exists (creates ./public/hello-ci.html if missing)
+      - name: 📝 Ensure smoke-test file exists
         run: |
           mkdir -p public
-          if [ ! -f public/hello-ci.html ]; then
-            cat > public/hello-ci.html <<'HTML'
-            <!doctype html>
-            <meta charset="utf-8">
-            <title>QuSciTech CI Smoke Test</title>
-            <h1>✅ CI/CD is working</h1>
-            <p>Built at: $(date -u)</p>
-            HTML
-          fi
+          [ -f public/hello-ci.html ] || cat > public/hello-ci.html <<'HTML'
+          <!doctype html><meta charset="utf-8">
+          <title>QuSciTech CI Smoke Test</title>
+          <h1>✅ CI/CD is working</h1>
+          <p>Built at: $(date -u)</p>
+          HTML
 
       - name: 🔎 Probe SFTP port 22
         run: |
@@ -47,12 +44,12 @@ jobs:
       - name: 📤 Upload via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server:   ${{ secrets.SFTP_HOST }}
-          username: ${{ secrets.SFTP_USER }}
-          password: ${{ secrets.SFTP_PASSWORD }}
+          server:     ${{ secrets.SFTP_HOST }}
+          username:   ${{ secrets.SFTP_USER }}
+          password:   ${{ secrets.SFTP_PASSWORD }}
           local_path: ./public/
-          remote_path: ${{ secrets.SFTP_REMOTE_DIR }}   # e.g. /home/quscitech/public_html/instructors/QST-INST-2025/resources/
-          sftp_only: true
+          remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
+          sftp_only:  true
           args: -o StrictHostKeyChecking=no
 
       - name: 🌐 Verify file reachable (curl smoke test with retry)
@@ -64,30 +61,46 @@ jobs:
           echo "Checking $URL"
           for i in {1..8}; do
             if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
-              echo "✅ Smoke test passed"
-              exit 0
+              echo "✅ Smoke test passed"; exit 0
             fi
-            echo "⏳ Waiting and retrying ($i/8)..."
-            sleep 5
+            echo "⏳ Waiting and retrying ($i/8)..."; sleep 5
           done
-          echo "❌ Smoke test failed: file not reachable" >&2
-          exit 1
+          echo "❌ Smoke test failed: file not reachable" >&2; exit 1
+
+      # ---------- NEW: compute a safe flag without exposing secrets ----------
+      - name: 🔐 Decide if SMTP step should run
+        env:
+          SMTP_HOST:     ${{ secrets.SMTP_HOST }}
+          SMTP_PORT_SEC: ${{ secrets.SMTP_PORT }}
+          SMTP_USER:     ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASS:     ${{ secrets.SMTP_PASSWORD }}
+          MAIL_FROM_SEC: ${{ secrets.MAIL_FROM }}
+          MAIL_TO_SEC:   ${{ secrets.MAIL_TO }}
+        run: |
+          set -e
+          if [ -n "${SMTP_HOST}" ] && [ -n "${SMTP_PORT_SEC}" ] && \
+             [ -n "${SMTP_USER}" ] && [ -n "${SMTP_PASS}" ] && \
+             [ -n "${MAIL_FROM_SEC}" ] && [ -n "${MAIL_TO_SEC}" ]; then
+            echo "HAS_SMTP=true" >> "$GITHUB_ENV"
+            echo "SMTP_PORT=${SMTP_PORT_SEC}" >> "$GITHUB_ENV"
+          else
+            echo "HAS_SMTP=false" >> "$GITHUB_ENV"
+          fi
 
       - name: ✉️ Send deploy email (TLS auto-mode)
-        if: ${{ secrets.SMTP_HOST && secrets.SMTP_PORT && secrets.SMTP_USERNAME && secrets.SMTP_PASSWORD && secrets.MAIL_FROM && secrets.MAIL_TO }}
+        if: env.HAS_SMTP == 'true'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: ${{ secrets.SMTP_HOST }}
-          server_port:    ${{ secrets.SMTP_PORT }}
+          server_port:    ${{ env.SMTP_PORT }}
           username:       ${{ secrets.SMTP_USERNAME }}
           password:       ${{ secrets.SMTP_PASSWORD }}
           from:           ${{ secrets.MAIL_FROM }}
           to:             ${{ secrets.MAIL_TO }}
           subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
-          # TLS pairing logic:
-          secure:  ${{ secrets.SMTP_PORT == '465' }}   # implicit SSL when 465
-          starttls: ${{ secrets.SMTP_PORT == '587' }}  # STARTTLS when 587
-          # If your cPanel/Exim cert CN mismatch ever bites, temporarily uncomment:
+          secure:  ${{ env.SMTP_PORT == '465' }}   # implicit SSL
+          starttls: ${{ env.SMTP_PORT == '587' }}  # STARTTLS
+          # If your cPanel/Exim cert CN ever causes issues, temporarily:
           # ignore_cert: true
           body: |
             ✅ Deployment completed to ${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_REMOTE_DIR }}

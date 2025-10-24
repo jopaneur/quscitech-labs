@@ -67,7 +67,7 @@ jobs:
           done
           echo "❌ Smoke test failed: file not reachable" >&2; exit 1
 
-      # ---------- NEW: compute a safe flag without exposing secrets ----------
+      # ---------- Compute a safe flag for SMTP without exposing secrets ----------
       - name: 🔐 Decide if SMTP step should run
         env:
           SMTP_HOST:     ${{ secrets.SMTP_HOST }}
@@ -87,7 +87,7 @@ jobs:
             echo "HAS_SMTP=false" >> "$GITHUB_ENV"
           fi
 
-      - name: ✉️ Send deploy email (TLS auto-mode)
+      - name: ✉️ Send deploy email
         if: env.HAS_SMTP == 'true'
         uses: dawidd6/action-send-mail@v3
         with:
@@ -98,10 +98,8 @@ jobs:
           from:           ${{ secrets.MAIL_FROM }}
           to:             ${{ secrets.MAIL_TO }}
           subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
-          secure:  ${{ env.SMTP_PORT == '465' }}   # implicit SSL
-          starttls: ${{ env.SMTP_PORT == '587' }}  # STARTTLS
-          # If your cPanel/Exim cert CN ever causes issues, temporarily:
-          # ignore_cert: true
+          secure: ${{ env.SMTP_PORT == '465' }}     # implicit SSL for 465; false for 587
+          ignore_cert: true                         # optional for cPanel CN mismatch
           body: |
             ✅ Deployment completed to ${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_REMOTE_DIR }}
             🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}

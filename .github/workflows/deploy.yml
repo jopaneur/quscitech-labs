@@ -1,4 +1,4 @@
-name: Deploy to QuSciTech (SFTP) + Smoke Test (Hardened)
+name: Deploy to QuSciTech (SFTP) + Smoke Test
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - 'public/**'
       - '.github/workflows/deploy.yml'
   schedule:
-    - cron: '0 9 * * *'   # run daily at 09:00 UTC
+    - cron: '0 9 * * *'        # Daily at 09:00 UTC
   workflow_dispatch: {}
 
 env:
@@ -43,53 +43,16 @@ jobs:
             echo "❌ Port 22 NOT reachable"; exit 1
           fi
 
-      - name: 🔑 Pin VPS SSH host key (StrictHostKeyChecking enabled)
-        run: |
-          set -e
-          mkdir -p ~/.ssh
-          # Prefer modern ed25519; include rsa as fallback in case host presents it
-          ssh-keyscan -T 5 -t ed25519,rsa ${{ secrets.SFTP_HOST }} >> ~/.ssh/known_hosts
-          chmod 700 ~/.ssh
-          chmod 600 ~/.ssh/known_hosts
-          echo "✅ Host key pinned for ${{ secrets.SFTP_HOST }}"
-
-      - name: 🔐 Decide SFTP auth mode (key vs password)
-        env:
-          SFTP_PRIVATE_KEY: ${{ secrets.SFTP_PRIVATE_KEY }}
-        run: |
-          if [ -n "${SFTP_PRIVATE_KEY}" ]; then
-            echo "USE_KEY=true" >> "$GITHUB_ENV"
-            echo "🔐 Using SSH private key for SFTP"
-          else
-            echo "USE_KEY=false" >> "$GITHUB_ENV"
-            echo "🔒 Falling back to password auth (no private key present)"
-          fi
-
-      # --- Preferred: SSH private key ---
-      - name: 📤 Upload via SFTP (key auth)
-        if: env.USE_KEY == 'true'
+      - name: 📤 Upload via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server:           ${{ secrets.SFTP_HOST }}
-          username:         ${{ secrets.SFTP_USER }}
-          ssh_private_key:  ${{ secrets.SFTP_PRIVATE_KEY }}
-          local_path:       ./public/
-          remote_path:      ${{ secrets.SFTP_REMOTE_DIR }}
-          sftp_only:        true
-          # StrictHostKeyChecking is ON by default now because we pinned known_hosts
-
-      # --- Fallback: password (kept only for continuity) ---
-      - name: 📤 Upload via SFTP (password auth)
-        if: env.USE_KEY == 'false'
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-        with:
-          server:           ${{ secrets.SFTP_HOST }}
-          username:         ${{ secrets.SFTP_USER }}
-          password:         ${{ secrets.SFTP_PASSWORD }}
-          local_path:       ./public/
-          remote_path:      ${{ secrets.SFTP_REMOTE_DIR }}
-          sftp_only:        true
-          # No StrictHostKeyChecking=no — we pinned known_hosts above
+          server:      ${{ secrets.SFTP_HOST }}
+          username:    ${{ secrets.SFTP_USER }}
+          password:    ${{ secrets.SFTP_PASSWORD }}
+          local_path:  ./public/
+          remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
+          sftp_only:   true
+          args: -o StrictHostKeyChecking=no
 
       - name: 🌐 Verify file reachable (curl smoke test with retry)
         env:
@@ -106,6 +69,7 @@ jobs:
           done
           echo "❌ Smoke test failed: file not reachable" >&2; exit 1
 
+      # ---------- Email notice (optional; runs only if all SMTP secrets are set) ----------
       - name: 🔐 Decide if SMTP step should run
         env:
           SMTP_HOST:     ${{ secrets.SMTP_HOST }}

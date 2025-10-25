@@ -6,8 +6,6 @@ on:
     paths:
       - 'public/**'
       - '.github/workflows/deploy.yml'
-  schedule:
-    - cron: '0 9 * * *'   # run daily at 09:00 UTC
   workflow_dispatch: {}
 
 env:
@@ -69,6 +67,7 @@ jobs:
           done
           echo "❌ Smoke test failed: file not reachable" >&2; exit 1
 
+      # ---------- Compute a safe flag for SMTP without exposing secrets ----------
       - name: 🔐 Decide if SMTP step should run
         env:
           SMTP_HOST:     ${{ secrets.SMTP_HOST }}
@@ -99,7 +98,8 @@ jobs:
           from:           ${{ secrets.MAIL_FROM }}
           to:             ${{ secrets.MAIL_TO }}
           subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
-          secure: ${{ env.SMTP_PORT == '465' }}   # SSL for 465; STARTTLS auto for 587
+          secure: ${{ env.SMTP_PORT == '465' }}     # implicit SSL for 465; false for 587
+          ignore_cert: true                         # optional for cPanel CN mismatch
           body: |
             ✅ Deployment completed to ${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_REMOTE_DIR }}
             🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}

@@ -1,19 +1,28 @@
 name: Mail Test (TLS + Send)
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      to:
+        description: "Recipient email address"
+        required: true
+        default: "support@quscitech.com"
+      port:
+        description: "SMTP port (587 STARTTLS or 465 SSL)"
+        required: false
+        default: "587"
 
 jobs:
   mailtest:
     name: Probe TLS & Send Test Mail
     runs-on: ubuntu-latest
     env:
-      SMTP_HOST: ${{ secrets.SMTP_HOST }}        # e.g., qram.quscitech.com
-      SMTP_PORT: ${{ secrets.SMTP_PORT }}        # "587" (recommended) or "465"
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}        # qram.quscitech.com
+      SMTP_PORT: ${{ inputs.port }}
       SMTP_USER: ${{ secrets.SMTP_USERNAME }}    # no-reply@quscitech.com
       SMTP_PASS: ${{ secrets.SMTP_PASSWORD }}
       MAIL_FROM: ${{ secrets.MAIL_FROM }}        # no-reply@quscitech.com
-      MAIL_TO:   qa@quscitech.com               # test recipient (hard-coded as requested)
+      MAIL_TO:   ${{ inputs.to }}
     steps:
       - name: Print chosen settings
         run: |
@@ -46,15 +55,14 @@ jobs:
         with:
           server_address:  ${{ env.SMTP_HOST }}
           server_port:     ${{ env.SMTP_PORT }}
-          # secure: true for 465 (implicit SSL), false for 587 (STARTTLS)
-          secure:          ${{ env.SMTP_PORT == '465' }}
+          secure:          ${{ env.SMTP_PORT == '465' }}   # true for 465, false for 587
           username:        ${{ env.SMTP_USER }}
           password:        ${{ env.SMTP_PASS }}
           from:            ${{ env.MAIL_FROM }}
           to:              ${{ env.MAIL_TO }}
           subject: "QuSciTech Mail Test — ${{ github.repository }} #${{ github.run_number }}"
           body: |
-            ✅ This is an automated test email from GitHub Actions.
+            ✅ Automated test email from GitHub Actions.
             Repo:  ${{ github.repository }}
             RunID: ${{ github.run_id }}
 
@@ -62,5 +70,4 @@ jobs:
             SMTP Port: ${{ env.SMTP_PORT }}
             Mode:      ${{ env.SMTP_PORT == '465' && 'Implicit SSL (465)' || 'STARTTLS (587)' }}
 
-            TLS details for reference are printed in the job logs above
-            (subject, issuer, validity, and SANs for 465 and 587 probes).
+            TLS details are printed in the job logs above.

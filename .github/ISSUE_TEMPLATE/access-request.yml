@@ -2,19 +2,22 @@ name: "Access Request"
 description: "Request access to the private QuSciTech Labs (E.1–E.3)"
 title: "Access Request: <your GitHub handle>"
 labels: ["access-request", "triage"]
-assignees: []
+assignees: ["jopaneur"]
 body:
   - type: markdown
     attributes:
       value: |
-        Please complete all required fields. Do **not** paste sensitive payment information—only the order/receipt ID.
+        ### Instructions
+        1) Please complete all required fields.
+        2) Do **not** paste sensitive payment info—only an order/receipt ID.
+        3) Submitting this form shares your name/email with QuSciTech for verification.
   - type: input
     id: name
     attributes: { label: "Full name", placeholder: "Your full name" }
     validations: { required: true }
   - type: input
     id: email
-    attributes: { label: "Email (GitHub‑associated preferred)", placeholder: "you@example.com" }
+    attributes: { label: "Email (GitHub-associated preferred)", placeholder: "you@example.com" }
     validations: { required: true }
   - type: input
     id: github
@@ -53,4 +56,11 @@ body:
       label: "Terms"
       options:
         - label: "I agree to the QuSciTech Labs Terms of Use and private repo guidelines."
+          required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: "Privacy"
+      options:
+        - label: "I consent to QuSciTech using the above info solely to verify eligibility and grant access."
           required: true

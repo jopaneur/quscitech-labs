@@ -1,0 +1,66 @@
+name: Mail Test (TLS + Send)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  mailtest:
+    name: Probe TLS & Send Test Mail
+    runs-on: ubuntu-latest
+    env:
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}        # e.g., qram.quscitech.com
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}        # "587" (recommended) or "465"
+      SMTP_USER: ${{ secrets.SMTP_USERNAME }}    # no-reply@quscitech.com
+      SMTP_PASS: ${{ secrets.SMTP_PASSWORD }}
+      MAIL_FROM: ${{ secrets.MAIL_FROM }}        # no-reply@quscitech.com
+      MAIL_TO:   qa@quscitech.com               # test recipient (hard-coded as requested)
+    steps:
+      - name: Print chosen settings
+        run: |
+          echo "SMTP_HOST=${SMTP_HOST}"
+          echo "SMTP_PORT=${SMTP_PORT}"
+          echo "MAIL_FROM=${MAIL_FROM}"
+          echo "MAIL_TO=${MAIL_TO}"
+
+      - name: 🔐 TLS probe — 465 (implicit SSL)
+        run: |
+          set -euxo pipefail
+          echo | openssl s_client -connect "${SMTP_HOST}:465" -servername "${SMTP_HOST}" 2>/dev/null \
+            | tee /tmp/smtps465.pem \
+            | openssl x509 -noout -subject -issuer -dates -ext subjectAltName || true
+          echo "----- CERT CHAIN (465) -----"
+          awk 'BEGIN{c=0}/BEGIN CERTIFICATE/{c++} {print} END{print "Total certs in chain: " c}' /tmp/smtps465.pem || true
+
+      - name: 🔐 TLS probe — 587 (STARTTLS)
+        run: |
+          set -euxo pipefail
+          ( echo -ne "EHLO probe.example\r\nSTARTTLS\r\n" \
+            | openssl s_client -starttls smtp -connect "${SMTP_HOST}:587" -servername "${SMTP_HOST}" 2>/dev/null ) \
+            | tee /tmp/smtp587.pem \
+            | openssl x509 -noout -subject -issuer -dates -ext subjectAltName || true
+          echo "----- CERT CHAIN (587) -----"
+          awk 'BEGIN{c=0}/BEGIN CERTIFICATE/{c++} {print} END{print "Total certs in chain: " c}' /tmp/smtp587.pem || true
+
+      - name: ✉️ Send test email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address:  ${{ env.SMTP_HOST }}
+          server_port:     ${{ env.SMTP_PORT }}
+          # secure: true for 465 (implicit SSL), false for 587 (STARTTLS)
+          secure:          ${{ env.SMTP_PORT == '465' }}
+          username:        ${{ env.SMTP_USER }}
+          password:        ${{ env.SMTP_PASS }}
+          from:            ${{ env.MAIL_FROM }}
+          to:              ${{ env.MAIL_TO }}
+          subject: "QuSciTech Mail Test — ${{ github.repository }} #${{ github.run_number }}"
+          body: |
+            ✅ This is an automated test email from GitHub Actions.
+            Repo:  ${{ github.repository }}
+            RunID: ${{ github.run_id }}
+
+            SMTP Host: ${{ env.SMTP_HOST }}
+            SMTP Port: ${{ env.SMTP_PORT }}
+            Mode:      ${{ env.SMTP_PORT == '465' && 'Implicit SSL (465)' || 'STARTTLS (587)' }}
+
+            TLS details for reference are printed in the job logs above
+            (subject, issuer, validity, and SANs for 465 and 587 probes).

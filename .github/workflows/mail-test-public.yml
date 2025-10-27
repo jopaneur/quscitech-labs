@@ -1,0 +1,68 @@
+name: Mail TLS Test (Public • On-Demand + Daily @ 09:00 UTC)
+
+on:
+  workflow_dispatch:
+    inputs:
+      to:
+        description: "Recipient email (leave blank to use secrets.MAIL_TO)"
+        required: false
+        default: ""
+      subject:
+        description: "Email subject override (blank = auto)"
+        required: false
+        default: ""
+      body:
+        description: "Email body override (blank = auto)"
+        required: false
+        default: ""
+  schedule:
+    - cron: "0 9 * * *"
+
+jobs:
+  mail:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🕒 Timestamp (UTC)
+        id: ts
+        run: echo "ts=$(date -u '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_OUTPUT"
+
+      - name: 🧰 Compose subject/body
+        id: compose
+        env:
+          TS: ${{ steps.ts.outputs.ts }}
+          RUNNER_OS: ${{ runner.os }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          SHA: ${{ github.sha }}
+        run: |
+          echo "SUBJECT=QuSciTech Public Mail TLS Test — ${REPO} — ${TS} UTC" >> "$GITHUB_OUTPUT"
+
+          cat > body.txt <<'EOF'
+          ✅ This is a QuSciTech **Public TLS mail test** sent from GitHub Actions.
+
+          Workflow: Mail TLS Test (Public)
+          Environment: QuSciTech Sandbox / Educational Infrastructure
+          Runner: ${RUNNER_OS}
+          Repo: ${REPO}
+          Run ID: ${RUN_ID}
+          Commit: ${SHA}
+          Timestamp (UTC): ${TS}
+          EOF
+
+          echo "BODY<<EOF" >> "$GITHUB_OUTPUT"
+          cat body.txt >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: ✉️ Send test mail (Public)
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          secure: true
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          from:     ${{ secrets.MAIL_FROM }}
+          to:       ${{ github.event.inputs.to || secrets.MAIL_TO }}
+          subject:  ${{ github.event.inputs.subject || steps.compose.outputs.SUBJECT }}
+          body:     ${{ github.event.inputs.body || steps.compose.outputs.BODY }}

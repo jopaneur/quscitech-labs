@@ -92,3 +92,24 @@ datasets/
 #  Visible files should only include those necessary for
 #  public documentation, labs, and GitHub Actions.
 ###############################################################
+
+# ============================
+# 🧠 QuSciTech Private Materials
+# ============================
+# Prevent internal admin / ops documents from being committed
+
+# Private operational guides and checklists
+QAIS_*_Internal_Ops.docx
+QAIS_*_TA_Checklist.docx
+
+# Any similar private operational docs
+/private/ops/
+/private/admin/
+/private/confidential/
+/private/**/*.docx
+/private/**/*.pdf
+/private/**/*.md
+
+# Ignore all hidden operational docs unless explicitly needed
+**/ops/**/*
+**/admin/**/*

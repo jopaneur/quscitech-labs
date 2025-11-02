@@ -58,3 +58,4 @@ if __name__ == "__main__":
     check_footers()
     check_figure_paths()
     print("✅ Preflight complete.")
+

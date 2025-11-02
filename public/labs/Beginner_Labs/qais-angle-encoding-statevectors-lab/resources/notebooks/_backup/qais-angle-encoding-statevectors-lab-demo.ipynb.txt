@@ -1,0 +1,38 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# QAIS Lab: Angle Encoding & Statevectors (Demo)\n",
+    "\n",
+    "This notebook demonstrates how classical data can be embedded into a quantum system\n",
+    "through **angle encoding**, producing corresponding **statevectors** visualized on the\n",
+    "Bloch sphere.\n",
+    "\n",
+    "**Learning Goals:**\n",
+    "- Interpret how rotation parameters encode classical features.\n",
+    "- Visualize qubit states and amplitude changes.\n",
+    "- Relate geometric intuition to linear algebraic structure.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "metadata": {},
+   "source": [
+    "# Example placeholder — visualization-only variant\n",
+    "import numpy as np\n",
+    "theta = np.linspace(0, np.pi, 8)\n",
+    "statevectors = np.exp(1j * theta)\n",
+    "statevectors[:5]"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": { "name": "python3", "display_name": "Python 3" },
+  "language_info": { "name": "python", "version": "3.11" }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
+

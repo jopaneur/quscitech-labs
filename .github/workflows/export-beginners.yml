@@ -1,0 +1,19 @@
+name: Export Beginner Artifacts
+on:
+  push:
+    paths:
+      - "public/labs/Beginner_Labs/**"
+      - "tools/**"
+  workflow_dispatch:
+
+jobs:
+  export-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install matplotlib numpy
+      - run: bash tools/export_all_beginners.sh
+      - run: python tools/verify_lab_structure.py --all

@@ -1,0 +1,109 @@
+name: Deploy to QuSciTech (SFTP) + Smoke Test
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'public/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch: {}
+
+env:
+  WEB_HOSTNAME: quscitech.com
+  SMOKE_PATH: instructors/QST-INST-2025/resources/hello-ci.html
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧰 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📝 Ensure smoke-test file exists
+        run: |
+          mkdir -p public
+          [ -f public/hello-ci.html ] || cat > public/hello-ci.html <<'HTML'
+          <!doctype html><meta charset="utf-8">
+          <title>QuSciTech CI Smoke Test</title>
+          <h1>✅ CI/CD is working</h1>
+          <p>Built at: $(date -u)</p>
+          HTML
+
+      - name: 🔎 Probe SFTP port 22
+        run: |
+          set -e
+          HOST="${{ secrets.SFTP_HOST }}"
+          echo "Probing $HOST:22 ..."
+          if timeout 5 bash -lc "cat < /dev/null > /dev/tcp/$HOST/22"; then
+            echo "✅ Port 22 reachable"
+          else
+            echo "❌ Port 22 NOT reachable"; exit 1
+          fi
+
+      - name: 📤 Upload via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server:     ${{ secrets.SFTP_HOST }}
+          username:   ${{ secrets.SFTP_USER }}
+          password:   ${{ secrets.SFTP_PASSWORD }}
+          local_path: ./public/
+          remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
+          sftp_only:  true
+          args: -o StrictHostKeyChecking=no
+
+      - name: 🌐 Verify file reachable (curl smoke test with retry)
+        env:
+          VPS_IP: ${{ secrets.VPS_IP }}
+        run: |
+          set -e
+          URL="https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
+          echo "Checking $URL"
+          for i in {1..8}; do
+            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
+              echo "✅ Smoke test passed"; exit 0
+            fi
+            echo "⏳ Waiting and retrying ($i/8)..."; sleep 5
+          done
+          echo "❌ Smoke test failed: file not reachable" >&2; exit 1
+
+      # ---------- Compute a safe flag for SMTP without exposing secrets ----------
+      - name: 🔐 Decide if SMTP step should run
+        env:
+          SMTP_HOST:     ${{ secrets.SMTP_HOST }}
+          SMTP_PORT_SEC: ${{ secrets.SMTP_PORT }}
+          SMTP_USER:     ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASS:     ${{ secrets.SMTP_PASSWORD }}
+          MAIL_FROM_SEC: ${{ secrets.MAIL_FROM }}
+          MAIL_TO_SEC:   ${{ secrets.MAIL_TO }}
+        run: |
+          set -e
+          if [ -n "${SMTP_HOST}" ] && [ -n "${SMTP_PORT_SEC}" ] && \
+             [ -n "${SMTP_USER}" ] && [ -n "${SMTP_PASS}" ] && \
+             [ -n "${MAIL_FROM_SEC}" ] && [ -n "${MAIL_TO_SEC}" ]; then
+            echo "HAS_SMTP=true" >> "$GITHUB_ENV"
+            echo "SMTP_PORT=${SMTP_PORT_SEC}" >> "$GITHUB_ENV"
+          else
+            echo "HAS_SMTP=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: ✉️ Send deploy email
+        if: env.HAS_SMTP == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port:    ${{ env.SMTP_PORT }}
+          username:       ${{ secrets.SMTP_USERNAME }}
+          password:       ${{ secrets.SMTP_PASSWORD }}
+          from:           ${{ secrets.MAIL_FROM }}
+          to:             ${{ secrets.MAIL_TO }}
+          subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
+          secure: ${{ env.SMTP_PORT == '465' }}     # implicit SSL for 465; false for 587
+          ignore_cert: true                         # optional for cPanel CN mismatch
+          body: |
+            ✅ Deployment completed to ${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_REMOTE_DIR }}
+            🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
+            Repo: ${{ github.repository }}
+            Commit: ${{ github.sha }}
+            By: ${{ github.actor }}
+

@@ -1,5 +1,7 @@
 name: Deploy to QuSciTech (SFTP) + Smoke Test
 
+# PUBLIC deploy (ships /public only)
+
 on:
   push:
     branches: [ main ]
@@ -107,3 +109,4 @@ jobs:
             Repo: ${{ github.repository }}
             Commit: ${{ github.sha }}
             By: ${{ github.actor }}
+

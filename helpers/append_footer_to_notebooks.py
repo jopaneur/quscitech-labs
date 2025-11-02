@@ -14,12 +14,12 @@ FOOTER_MD = """
 
 If referencing this repository or its companion materials, please cite:
 
-> **Wilson, J. (2025).** *Quantum AI Systems — Theory, Architecture, and Applications: Companion Labs (QuSciTech-Labs).*  
+> **Wilson, J. (2025).** *Quantum AI Systems — Theory, Architecture, and Applications: Companion Labs (QuSciTech-Labs).*
 > QuSciTech Press. Zenodo. [https://doi.org/10.5281/zenodo.17212825](https://doi.org/10.5281/zenodo.17212825)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17212825.svg)](https://doi.org/10.5281/zenodo.17212825)
 
-© 2025 **Dr. Joe Wilson** — All Rights Reserved  
+© 2025 **Dr. Joe Wilson** — All Rights Reserved
 **QuSciTech Press** | [www.quscitech.com](https://www.quscitech.com)
 """
 
@@ -79,3 +79,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

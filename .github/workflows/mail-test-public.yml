@@ -66,3 +66,4 @@ jobs:
           to:       ${{ github.event.inputs.to || secrets.MAIL_TO }}
           subject:  ${{ github.event.inputs.subject || steps.compose.outputs.SUBJECT }}
           body:     ${{ github.event.inputs.body || steps.compose.outputs.BODY }}
+

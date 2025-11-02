@@ -1,0 +1,27 @@
+name: Verify Public Labs
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'   # fallback works with '3.x' if needed
+
+      - name: Install deps (plotters used by exporters)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install matplotlib numpy
+
+      - name: Verify public lab structure
+        run: |
+          python tools/verify_lab_structure.py --all
+

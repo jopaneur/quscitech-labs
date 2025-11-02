@@ -29,3 +29,4 @@ Expected output:
 🔍 Checking figure paths...
 ✅ Found 5 saved figure(s).
 ✅ Preflight complete.
+

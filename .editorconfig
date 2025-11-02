@@ -1,0 +1,18 @@
+# .editorconfig — QuSciTech Labs
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Preserve Markdown hard line breaks (two spaces at EOL)
+[*.md]
+trim_trailing_whitespace = false
+
+# Never touch notebooks / binaries
+[*.ipynb]
+end_of_line = lf
+insert_final_newline = false
+trim_trailing_whitespace = false

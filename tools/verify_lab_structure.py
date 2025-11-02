@@ -1,85 +1,74 @@
 #!/usr/bin/env python3
 """
-QuSciTech Public Labs Structure Validator (Option A layout)
+QuSciTech Public Labs Structure Validator (Final Option A Layout)
 
-Enforces:
-  - resources/assets/data   (data lives here)
-  - resources/images        (images live here)
+Validates that every public lab includes:
+  - resources/assets/data
+  - resources/assets/images
 
-Warns (does not fail) if it sees legacy/alternate paths like resources/data.
+Notes:
+  • Other legacy folders (resources/data or resources/images) are tolerated
+    but not required.
+  • Meant for pre-commit integration under tools/verify_lab_structure.py
 """
 
 from pathlib import Path
 import sys
 
-REPO_ROOT = Path(__file__).resolve().parents[1]  # repo root assumed: tools/...
+REPO_ROOT = Path(__file__).resolve().parents[1]  # repo root (tools/..)
 LABS_ROOT = REPO_ROOT / "public" / "labs"
 
-# >>> Option A: current layout
+# --- Option A required subpaths ---
 REQUIRED_DIRS = [
-    "resources/assets/data",   # data here (required)
-    "resources/images",        # images here (required)
+    "resources/assets/data",
+    "resources/assets/images",
 ]
 
-# Optional/legacy dirs we tolerate but warn about if present/misused
+# Tolerated but not required (legacy/alternate)
 TOLERATED_ALT_DIRS = [
-    "resources/data",              # legacy data
-    "resources/assets/images",     # alt images
+    "resources/data",
+    "resources/images",
 ]
 
 def list_lab_dirs():
-    if not LABS_ROOT.exists():
-        print(f"⚠️  Labs root not found: {LABS_ROOT}")
-        return []
-    # any directory under public/labs/*/* considered a lab (Beginner/Intermediate/Advanced)
+    """Return all lab directories under public/labs/*/*, skipping backups/hidden."""
     labs = []
+    if not LABS_ROOT.exists():
+        print(f"⚠️ Labs root not found: {LABS_ROOT}")
+        return labs
     for tier in LABS_ROOT.iterdir():
         if not tier.is_dir():
             continue
         for lab in tier.iterdir():
-            if lab.is_dir():
-                labs.append(lab)
+            if not lab.is_dir():
+                continue
+            name = lab.name
+            # Skip backup/hidden or temp labs
+            if name.startswith("_") or name.lower() in {"backup", ".backup"}:
+                continue
+            labs.append(lab)
     return sorted(labs)
 
-def validate_lab(lab: Path):
-    missing = []
-    warnings = []
-    notes = []
 
-    # Required dirs (Option A)
+def validate_lab(lab: Path):
+    """Check required and optional folders inside one lab."""
+    missing, warnings, notes = [], [], []
+
+    # required Option A folders
     for rel in REQUIRED_DIRS:
         if not (lab / rel).is_dir():
             missing.append(rel)
 
-    # Soft warnings for alternate/legacy
+    # optional tolerated ones
     for rel in TOLERATED_ALT_DIRS:
         if (lab / rel).is_dir():
-            warnings.append(f"Legacy/alternate present: {rel} (kept for compatibility)")
+            warnings.append(f"Legacy folder present (ok): {rel}")
 
-    # Gentle nudge if CSVs/images are in unexpected places
-    # Scan a few common spots and suggest the canonical Option A locations
-    assets_data = lab / "resources" / "assets" / "data"
-    legacy_data = lab / "resources" / "data"
-    images_dir = lab / "resources" / "images"
-    alt_images = lab / "resources" / "assets" / "images"
-
-    # CSVs in legacy data?
-    if legacy_data.is_dir():
-        csvs = list(legacy_data.glob("*.csv"))
-        if csvs:
-            warnings.append("Found CSVs in resources/data — Option A expects resources/assets/data.")
-
-    # CSVs in assets/data fine; if none, note
-    if assets_data.is_dir():
-        if not any(assets_data.glob("*.csv")):
-            notes.append("No CSVs found in resources/assets/data (ok if not needed).")
-
-    # Images check
-    if images_dir.is_dir():
-        if not any(images_dir.glob("*.png")) and not any(images_dir.glob("*.jpg")):
-            notes.append("No images in resources/images (ok if not generated yet).")
-    elif alt_images.is_dir():
-        warnings.append("Images found under resources/assets/images — Option A expects resources/images.")
+    # quick note if data/images empty
+    for rel in REQUIRED_DIRS:
+        folder = lab / rel
+        if folder.is_dir() and not any(folder.iterdir()):
+            notes.append(f"{rel} exists but empty.")
 
     return missing, warnings, notes
 
@@ -89,10 +78,10 @@ def main():
         print("No labs found under public/labs.")
         sys.exit(0)
 
-    any_fail = False
-    print("→ Running QuSciTech Public Lab structure verification (Option A)…")
+    print("→ Running QuSciTech Public Lab Structure Verification (Final Option A)")
     print(f"Root: {LABS_ROOT}\n")
 
+    any_fail = False
     for lab in labs:
         rel = lab.relative_to(REPO_ROOT)
         print(f"🔎 Validating: {rel}")
@@ -120,8 +109,9 @@ def main():
         print("Some checks failed. See ❌ items above.\n")
         sys.exit(1)
 
-    print("All checks passed.\n")
+    print("All checks passed successfully.\n")
     sys.exit(0)
 
 if __name__ == "__main__":
     main()
+

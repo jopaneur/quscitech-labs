@@ -1,0 +1,167 @@
+Folder PATH listing for volume Google Drive
+Volume serial number is 1983-1116
+G:\MY DRIVE\GITHUB\QUSCITECH-LABS\PUBLIC\LABS\INTERMEDIATE_LABS
++---qais-quantum-kernel-svm-vs-logregression-lab
+¦   +---resources
+¦       ¦   README_Lab_Standard.md
+¦       ¦   
+¦       +---assets
+¦       ¦   +---images
+¦       ¦   ¦       README.md
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---data
+¦       ¦   ¦       README.md
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---code
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---docs
+¦       ¦           .gitkeep
+¦       ¦           
+¦       +---html
+¦       ¦       .gitkeep
+¦       ¦       
+¦       +---tests
+¦       ¦       hello-ci.html
+¦       ¦       
+¦       +---notebooks
+¦               E.2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb
+¦               .gitkeep
+¦               
++---qais-zz-expectation-scan-lab
+¦   +---resources
+¦       ¦   README_Lab_Standard.md
+¦       ¦   
+¦       +---assets
+¦       ¦   +---images
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---data
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---code
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---docs
+¦       ¦           .gitkeep
+¦       ¦           
+¦       +---html
+¦       ¦       .gitkeep
+¦       ¦       
+¦       +---tests
+¦       ¦       hello-ci.html
+¦       ¦       
+¦       +---notebooks
+¦               E.2_Lab_2_ZZ_Expectation_Scan.ipynb
+¦               .gitkeep
+¦               
++---qais-BB84-QKD-lab
+¦   +---resources
+¦       ¦   README_Lab_Standard.md
+¦       ¦   
+¦       +---assets
+¦       ¦   +---images
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---data
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---code
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---docs
+¦       ¦           .gitkeep
+¦       ¦           
+¦       +---html
+¦       ¦       .gitkeep
+¦       ¦       
+¦       +---tests
+¦       ¦       hello-ci.html
+¦       ¦       
+¦       +---notebooks
+¦               E.2_Lab_3_BB84_QKD.ipynb
+¦               .gitkeep
+¦               
++---qais-fidelity-trace-distance-lab
+¦   +---resources
+¦       ¦   README_Lab_Standard.md
+¦       ¦   
+¦       +---assets
+¦       ¦   +---images
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---data
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---code
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---docs
+¦       ¦           .gitkeep
+¦       ¦           
+¦       +---html
+¦       ¦       .gitkeep
+¦       ¦       
+¦       +---tests
+¦       ¦       hello-ci.html
+¦       ¦       
+¦       +---notebooks
+¦               E.2_Lab_4_Fidelity_Trace_Distance.ipynb
+¦               .gitkeep
+¦               
++---qais-entanglement-tamper-check-lab
+¦   +---resources
+¦       ¦   README_Lab_Standard.md
+¦       ¦   
+¦       +---assets
+¦       ¦   +---images
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---data
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---code
+¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       
+¦       ¦   +---docs
+¦       ¦           .gitkeep
+¦       ¦           
+¦       +---html
+¦       ¦       .gitkeep
+¦       ¦       
+¦       +---tests
+¦       ¦       hello-ci.html
+¦       ¦       
+¦       +---notebooks
+¦               E.2_Lab_5_Entanglement_Tamper_Check.ipynb
+¦               .gitkeep
+¦               
++---qais-VQE-Toy-Minimization-lab
+    +---resources
+        ¦   README_Lab_Standard.md
+        ¦   
+        +---assets
+        ¦   +---images
+        ¦   ¦       .gitkeep
+        ¦   ¦       
+        ¦   +---data
+        ¦   ¦       .gitkeep
+        ¦   ¦       
+        ¦   +---code
+        ¦   ¦       .gitkeep
+        ¦   ¦       
+        ¦   +---docs
+        ¦           .gitkeep
+        ¦           
+        +---html
+        ¦       .gitkeep
+        ¦       
+        +---tests
+        ¦       hello-ci.html
+        ¦       
+        +---notebooks
+                E.2_Lab_6_VQE_Toy_Minimization.ipynb
+                .gitkeep
+                

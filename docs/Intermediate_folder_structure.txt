@@ -1,0 +1,577 @@
+Folder PATH listing for volume Google Drive
+Volume serial number is 1983-1116
+G:.
+¦   .gitattributes
+¦   README.md
+¦   placeholder.txt
+¦   .gitignore
+¦   Labs_MASTER_README.md
+¦   LICENSE
+¦   public_folder_structure2
+¦   new_folder_structure.txt
+¦   .editorconfig
+¦   Intermediate_folder_structure.txt
+¦   
++---.github
+¦   +---workflows
+¦   ¦   ¦   deploy.yml
+¦   ¦   ¦   mail-test-public.yml
+¦   ¦   ¦   verify-public-labs.yml
+¦   ¦   ¦   export-beginners.yml
+¦   ¦   ¦   
+¦   ¦   +---_archive
+¦   ¦       ¦   deploy.yml
+¦   ¦       ¦   
+¦   ¦       +---working
+¦   ¦       ¦       deploy.yml
+¦   ¦       ¦       
+¦   ¦       +---Backup
+¦   ¦       ¦       deploy.yml
+¦   ¦       ¦       mail-test.yml
+¦   ¦       ¦       
+¦   ¦       +---Hardened
+¦   ¦               deploy.yml
+¦   ¦               
+¦   +---ISSUE_TEMPLATE
+¦           access-request.yml
+¦           config.yml
+¦           
++---docs
+¦   ¦   Labs_INDEX_README.md
+¦   ¦   _config.yml
+¦   ¦   index.md
+¦   ¦   Support_Template_Public.txt
+¦   ¦   systems_administration.docx
+¦   ¦   
+¦   +---Test-files
+¦           README.txt
+¦           Labs_MASTER_README.md
+¦           save_e_figure_helper.py
+¦           reviews.html
+¦           HomeComputer-InstalledFiles.docx
+¦           Part-1_CI_CD_Release_and_SFTP_Guide_v1.docx
+¦           Support_Template_Public - Copy.txt
+¦           Public-Test.html
+¦           Part-1_CI_CD_Release_and_SFTP_Guide_v1 - Copy.docx
+¦           tiny-test-file.html
+¦           
++---helpers
+¦       append_footer_to_notebooks.py
+¦       save_e_figure_helper.py
+¦       repo_preflight_check.py
+¦       Execution_Commands.txt
+¦       
++---system
+¦       QuSciTech_Labs_Consolidation_and_Verification_Procedure.pdf
+¦       QuSciTech_Labs_Repository_Privacy_and_Visibility_Policy.pdf
+¦       INDEX.md
+¦       
++---public
+¦   +---labs
+¦       ¦   README.md
+¦       ¦   
+¦       +---Beginner_Labs
+¦       ¦   +---qais-quantum-teleportation-lab
+¦       ¦   ¦   +---resources
+¦       ¦   ¦       ¦   README_Lab_Standard.md
+¦       ¦   ¦       ¦   
+¦       ¦   ¦       +---notebooks
+¦       ¦   ¦       ¦   ¦   E1_5_Quantum_Teleportation_Protocol_Demo_NoCode.ipynb
+¦       ¦   ¦       ¦   ¦   
+¦       ¦   ¦       ¦   +---backup
+¦       ¦   ¦       ¦           README.md
+¦       ¦   ¦       ¦           E1_2_Bell_State_Correlated_Outcomes_NoCode.ipynb
+¦       ¦   ¦       ¦           E1_3_Angle_Encoding_Statevectors_NoCode.ipynb
+¦       ¦   ¦       ¦           E1_4_Depth_Noise_Sensitivity_NoCode.ipynb
+¦       ¦   ¦       ¦           E1_1_Superposition_Probability_Distribution_NoCode.ipynb
+¦       ¦   ¦       ¦           E1_5_Quantum_Teleportation_Protocol_Demo_NoCode.ipynb
+¦       ¦   ¦       ¦           
+¦       ¦   ¦       +---assets
+¦       ¦   ¦       ¦   +---images
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       teleportation_fidelity.png
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---data
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       teleportation_fidelity.csv
+¦       ¦   ¦       ¦   ¦       .gitkeep
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---code
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       export_teleportation.py
+¦       ¦   ¦       ¦   ¦       _placeholder_export.py
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---docs
+¦       ¦   ¦       ¦           README.md
+¦       ¦   ¦       ¦           
+¦       ¦   ¦       +---html
+¦       ¦   ¦       ¦       README.md
+¦       ¦   ¦       ¦       hello-ci.html
+¦       ¦   ¦       ¦       
+¦       ¦   ¦       +---tests
+¦       ¦   ¦               hello-ci.html
+¦       ¦   ¦               README.md
+¦       ¦   ¦               
+¦       ¦   +---qais-superposition-lab
+¦       ¦   ¦   +---resources
+¦       ¦   ¦       ¦   README_Lab_Standard.md
+¦       ¦   ¦       ¦   
+¦       ¦   ¦       +---notebooks
+¦       ¦   ¦       ¦       E1_1_Superposition_Probability_Distribution_NoCode.ipynb
+¦       ¦   ¦       ¦       
+¦       ¦   ¦       +---assets
+¦       ¦   ¦       ¦   +---images
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       superposition_probs.png
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---data
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       superposition_probs.csv
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---code
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       export_superposition.py
+¦       ¦   ¦       ¦   ¦       _placeholder_export.py
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---docs
+¦       ¦   ¦       ¦           README.md
+¦       ¦   ¦       ¦           
+¦       ¦   ¦       +---html
+¦       ¦   ¦       ¦       README.md
+¦       ¦   ¦       ¦       hello-ci.html
+¦       ¦   ¦       ¦       
+¦       ¦   ¦       +---tests
+¦       ¦   ¦               hello-ci.html
+¦       ¦   ¦               README.md
+¦       ¦   ¦               
+¦       ¦   +---qais-bell-state-correlated-outcomes-lab
+¦       ¦   ¦   +---resources
+¦       ¦   ¦       ¦   README_Lab_Standard.md
+¦       ¦   ¦       ¦   
+¦       ¦   ¦       +---notebooks
+¦       ¦   ¦       ¦   ¦   E1_2_Bell_State_Correlated_Outcomes_NoCode.ipynb
+¦       ¦   ¦       ¦   ¦   README.md
+¦       ¦   ¦       ¦   ¦   
+¦       ¦   ¦       ¦   +---backup
+¦       ¦   ¦       ¦           E1_2_Bell_State_Correlated_Outcomes_NoCode.ipynb
+¦       ¦   ¦       ¦           README.md
+¦       ¦   ¦       ¦           E1_3_Angle_Encoding_Statevectors_NoCode.ipynb
+¦       ¦   ¦       ¦           E1_4_Depth_Noise_Sensitivity_NoCode.ipynb
+¦       ¦   ¦       ¦           E1_5_Quantum_Teleportation_Protocol_Demo_NoCode.ipynb
+¦       ¦   ¦       ¦           E1_1_Superposition_Probability_Distribution_NoCode.ipynb
+¦       ¦   ¦       ¦           
+¦       ¦   ¦       +---assets
+¦       ¦   ¦       ¦   +---images
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---data
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       bell_demo_counts.csv
+¦       ¦   ¦       ¦   ¦       bell_correlation.csv
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---code
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       bell_correlated_sim.js
+¦       ¦   ¦       ¦   ¦       export_bell_plot.py
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---docs
+¦       ¦   ¦       ¦           README.md
+¦       ¦   ¦       ¦           
+¦       ¦   ¦       +---html
+¦       ¦   ¦       ¦       README.md
+¦       ¦   ¦       ¦       qais-bell-state-correlated-outcomes-lab.html
+¦       ¦   ¦       ¦       
+¦       ¦   ¦       +---tests
+¦       ¦   ¦               README.md
+¦       ¦   ¦               How-to-use.txt
+¦       ¦   ¦               hello-ci.html
+¦       ¦   ¦               
+¦       ¦   +---qais-angle-encoding-statevectors-lab
+¦       ¦   ¦   +---resources
+¦       ¦   ¦       ¦   README_Lab_Standard.md
+¦       ¦   ¦       ¦   
+¦       ¦   ¦       +---notebooks
+¦       ¦   ¦       ¦   ¦   E1_3_Angle_Encoding_Statevectors_NoCode.ipynb
+¦       ¦   ¦       ¦   ¦   README.md
+¦       ¦   ¦       ¦   ¦   
+¦       ¦   ¦       ¦   +---_backup
+¦       ¦   ¦       ¦           E1_3_Angle_Encoding_Statevectors_NoCode.ipynb
+¦       ¦   ¦       ¦           README.md
+¦       ¦   ¦       ¦           E1_2_Bell_State_Correlated_Outcomes_NoCode.ipynb
+¦       ¦   ¦       ¦           E1_4_Depth_Noise_Sensitivity_NoCode.ipynb
+¦       ¦   ¦       ¦           E1_5_Quantum_Teleportation_Protocol_Demo_NoCode.ipynb
+¦       ¦   ¦       ¦           E1_1_Superposition_Probability_Distribution_NoCode.ipynb
+¦       ¦   ¦       ¦           qais-angle-encoding-statevectors-lab-demo.ipynb.txt
+¦       ¦   ¦       ¦           
+¦       ¦   ¦       +---assets
+¦       ¦   ¦       ¦   +---images
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       angles_demo.png
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---data
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       angles_demo.csv
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---code
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       statevector_tools.py
+¦       ¦   ¦       ¦   ¦       plotting.pyplotting.py
+¦       ¦   ¦       ¦   ¦       export_angle_encoding.py
+¦       ¦   ¦       ¦   ¦       _placeholder_export.py
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---docs
+¦       ¦   ¦       ¦           README.md
+¦       ¦   ¦       ¦           
+¦       ¦   ¦       +---html
+¦       ¦   ¦       ¦       README.md
+¦       ¦   ¦       ¦       qais-angle-encoding-statevectors-lab.html
+¦       ¦   ¦       ¦       hello-ci.html
+¦       ¦   ¦       ¦       
+¦       ¦   ¦       +---tests
+¦       ¦   ¦               README.md
+¦       ¦   ¦               hello-ci.html
+¦       ¦   ¦               
+¦       ¦   +---qais-depth-noise-sensitivity-lab
+¦       ¦   ¦   +---resources
+¦       ¦   ¦       ¦   README_Lab_Standard.md
+¦       ¦   ¦       ¦   
+¦       ¦   ¦       +---notebooks
+¦       ¦   ¦       ¦   ¦   E1_4_Depth_Noise_Sensitivity_NoCode.ipynb
+¦       ¦   ¦       ¦   ¦   
+¦       ¦   ¦       ¦   +---backup
+¦       ¦   ¦       ¦           E1_4_Depth_Noise_Sensitivity_NoCode.ipynb
+¦       ¦   ¦       ¦           README.md
+¦       ¦   ¦       ¦           E1_2_Bell_State_Correlated_Outcomes_NoCode.ipynb
+¦       ¦   ¦       ¦           E1_3_Angle_Encoding_Statevectors_NoCode.ipynb
+¦       ¦   ¦       ¦           E1_5_Quantum_Teleportation_Protocol_Demo_NoCode.ipynb
+¦       ¦   ¦       ¦           E1_1_Superposition_Probability_Distribution_NoCode.ipynb
+¦       ¦   ¦       ¦           
+¦       ¦   ¦       +---assets
+¦       ¦   ¦       ¦   +---images
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       depth_noise_sweep.png
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---data
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       depth_noise_sweep.csv
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---code
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       export_depth_noise.py
+¦       ¦   ¦       ¦   ¦       _placeholder_export.py
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---docs
+¦       ¦   ¦       ¦           README.md
+¦       ¦   ¦       ¦           
+¦       ¦   ¦       +---html
+¦       ¦   ¦       ¦       README.md
+¦       ¦   ¦       ¦       hello-ci.html
+¦       ¦   ¦       ¦       
+¦       ¦   ¦       +---tests
+¦       ¦   ¦               hello-ci.html
+¦       ¦   ¦               README.md
+¦       ¦   ¦               
+¦       ¦   +---_backup
+¦       ¦           README.md
+¦       ¦           
+¦       +---Intermediate_Labs
+¦       ¦   +---qais-quantum-kernel-svm-vs-logregression-lab
+¦       ¦   ¦   +---resources
+¦       ¦   ¦       +---assets
+¦       ¦   ¦       ¦   +---images
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---data
+¦       ¦   ¦       ¦   ¦       README.md
+¦       ¦   ¦       ¦   ¦       
+¦       ¦   ¦       ¦   +---code
+¦       ¦   ¦       ¦   +---docs
+¦       ¦   ¦       +---html
+¦       ¦   ¦       +---tests
+¦       ¦   ¦       +---notebooks
+¦       ¦   ¦               E.2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb
+¦       ¦   ¦               
+¦       ¦   +---qais-zz-expectation-scan-lab
+¦       ¦   ¦   +---resources
+¦       ¦   ¦       +---assets
+¦       ¦   ¦       ¦   +---images
+¦       ¦   ¦       ¦   +---data
+¦       ¦   ¦       ¦   +---code
+¦       ¦   ¦       ¦   +---docs
+¦       ¦   ¦       +---html
+¦       ¦   ¦       +---tests
+¦       ¦   ¦       +---notebooks
+¦       ¦   ¦               E.2_Lab_2_ZZ_Expectation_Scan.ipynb
+¦       ¦   ¦               
+¦       ¦   +---qais-BB84-QKD-lab
+¦       ¦   ¦   +---resources
+¦       ¦   ¦       +---assets
+¦       ¦   ¦       ¦   +---images
+¦       ¦   ¦       ¦   +---data
+¦       ¦   ¦       ¦   +---code
+¦       ¦   ¦       ¦   +---docs
+¦       ¦   ¦       +---html
+¦       ¦   ¦       +---tests
+¦       ¦   ¦       +---notebooks
+¦       ¦   ¦               E.2_Lab_3_BB84_QKD.ipynb
+¦       ¦   ¦               
+¦       ¦   +---qais-fidelity-trace-distance-lab
+¦       ¦   ¦   +---resources
+¦       ¦   ¦       +---assets
+¦       ¦   ¦       ¦   +---images
+¦       ¦   ¦       ¦   +---data
+¦       ¦   ¦       ¦   +---code
+¦       ¦   ¦       ¦   +---docs
+¦       ¦   ¦       +---html
+¦       ¦   ¦       +---tests
+¦       ¦   ¦       +---notebooks
+¦       ¦   ¦               E.2_Lab_4_Fidelity_Trace_Distance.ipynb
+¦       ¦   ¦               
+¦       ¦   +---qais-entanglement-tamper-check-lab
+¦       ¦   ¦   +---resources
+¦       ¦   ¦       +---assets
+¦       ¦   ¦       ¦   +---images
+¦       ¦   ¦       ¦   +---data
+¦       ¦   ¦       ¦   +---code
+¦       ¦   ¦       ¦   +---docs
+¦       ¦   ¦       +---html
+¦       ¦   ¦       +---tests
+¦       ¦   ¦       +---notebooks
+¦       ¦   ¦               E.2_Lab_5_Entanglement_Tamper_Check.ipynb
+¦       ¦   ¦               
+¦       ¦   +---qais-VQE-Toy-Minimization-lab
+¦       ¦       +---resources
+¦       ¦           +---assets
+¦       ¦           ¦   +---images
+¦       ¦           ¦   +---data
+¦       ¦           ¦   +---code
+¦       ¦           ¦   +---docs
+¦       ¦           +---html
+¦       ¦           +---tests
+¦       ¦           +---notebooks
+¦       ¦                   E.2_Lab_6_VQE_Toy_Minimization.ipynb
+¦       ¦                   
+¦       +---Advanced_Labs
+¦           +---qais-bloch-trajectories-lab
+¦           ¦   +---resources
+¦           ¦       +---notebooks
+¦           ¦       ¦       E.3_Lab_1_Bloch_Trajectories.ipynb
+¦           ¦       ¦       
+¦           ¦       +---assets
+¦           ¦       ¦   +---images
+¦           ¦       ¦   +---data
+¦           ¦       ¦   +---code
+¦           ¦       ¦   +---docs
+¦           ¦       +---html
+¦           ¦       +---tests
+¦           ¦               hello-ci.html
+¦           ¦               
+¦           +---qais-cshs-correlation-sweep-lab
+¦           ¦   +---resources
+¦           ¦       +---notebooks
+¦           ¦       ¦       E.3_Lab_2_CHSH_Correlation_Sweep.ipynb
+¦           ¦       ¦       
+¦           ¦       +---assets
+¦           ¦       ¦   +---images
+¦           ¦       ¦   +---data
+¦           ¦       ¦   +---code
+¦           ¦       ¦   +---docs
+¦           ¦       +---html
+¦           ¦       +---tests
+¦           ¦               hello-ci.html
+¦           ¦               
+¦           +---qais-tiny-vqc-vs-logregression-lab
+¦           ¦   +---resources
+¦           ¦       +---notebooks
+¦           ¦       ¦       E.3_Lab_3_Tiny_VQC_vs_LogReg.ipynb
+¦           ¦       ¦       
+¦           ¦       +---assets
+¦           ¦       ¦   +---images
+¦           ¦       ¦   +---data
+¦           ¦       ¦   +---code
+¦           ¦       ¦   +---docs
+¦           ¦       +---html
+¦           ¦       +---tests
+¦           ¦               hello-ci.html
+¦           ¦               
+¦           +---qais-hybrid-pipeline-quantum-kernel-svm-lab
+¦           ¦   +---resources
+¦           ¦       +---notebooks
+¦           ¦       ¦       E.3_Lab_4_Hybrid_Pipeline_QKernelSVM.ipynb
+¦           ¦       ¦       
+¦           ¦       +---assets
+¦           ¦       ¦   +---images
+¦           ¦       ¦   +---data
+¦           ¦       ¦   +---code
+¦           ¦       ¦   +---docs
+¦           ¦       +---html
+¦           ¦       +---tests
+¦           ¦               hello-ci.html
+¦           ¦               
+¦           +---qais-grover-success-vs-noise
+¦           ¦   +---resources
+¦           ¦       +---notebooks
+¦           ¦       ¦       E.3_Lab_5_Grover_Success_vs_Noise.ipynb
+¦           ¦       ¦       
+¦           ¦       +---assets
+¦           ¦       ¦   +---images
+¦           ¦       ¦   +---data
+¦           ¦       ¦   +---code
+¦           ¦       ¦   +---docs
+¦           ¦       +---html
+¦           ¦       +---tests
+¦           ¦               hello-ci.html
+¦           ¦               
+¦           +---qais-density-matrix-encoding-metricies-lab
+¦           ¦   +---resources
+¦           ¦       +---notebooks
+¦           ¦       ¦       E.3_Lab_6_Density_Matrix_Encoding_Metrics.ipynb
+¦           ¦       ¦       
+¦           ¦       +---assets
+¦           ¦       ¦   +---images
+¦           ¦       ¦   +---data
+¦           ¦       ¦   +---code
+¦           ¦       ¦   +---docs
+¦           ¦       +---html
+¦           ¦       +---tests
+¦           ¦               hello-ci.html
+¦           ¦               
+¦           +---qais-case-study-qalis-vs-crqc-llm-lab
+¦               +---resources
+¦                   +---notebooks
+¦                   ¦       E.3_Lab_7_CaseStudy_QALIS_vs_CRQC-LLM.ipynb
+¦                   ¦       
+¦                   +---assets
+¦                   ¦   +---images
+¦                   ¦   +---data
+¦                   ¦   +---code
+¦                   ¦   +---docs
+¦                   +---html
+¦                   +---tests
+¦                           hello-ci.html
+¦                           
++---.quiet-workflows
+¦       access-request-status.yml
+¦       access-request-triage.yml
+¦       access-request-auto-invite.yml
+¦       release-build-and-deploy.yml
+¦       
++---tools
+¦       verify_lab_structure.py
+¦       init_beginners_scaffold.sh
+¦       export_all_beginners.sh
+¦       strip_trailing_ws.py
+¦       init_public_scaffold.sh
+¦       sync_public_assets.sh
+¦       
++---public_html
+    +---instructors
+        +---QST-INST-2025
+            +---resources
+                ¦   hello-ci.html
+                ¦   
+                +---labs
+                    +---qais-quantum-teleportation-lab
+                    ¦   +---data
+                    ¦   ¦       teleportation_fidelity.csv
+                    ¦   ¦       README.md
+                    ¦   ¦       
+                    ¦   +---images
+                    ¦   ¦       teleportation_fidelity.png
+                    ¦   ¦       README.md
+                    ¦   ¦       
+                    ¦   +---html
+                    ¦           hello-ci.html
+                    ¦           
+                    +---qais-superposition-lab
+                    ¦   +---data
+                    ¦   ¦       superposition_probs.csv
+                    ¦   ¦       README.md
+                    ¦   ¦       
+                    ¦   +---images
+                    ¦   ¦       superposition_probs.png
+                    ¦   ¦       README.md
+                    ¦   ¦       
+                    ¦   +---html
+                    ¦           hello-ci.html
+                    ¦           
+                    +---qais-bell-state-correlated-outcomes-lab
+                    ¦   +---data
+                    ¦   ¦       bell_demo_counts.csv
+                    ¦   ¦       bell_correlation.csv
+                    ¦   ¦       README.md
+                    ¦   ¦       
+                    ¦   +---images
+                    ¦   ¦       README.md
+                    ¦   ¦       
+                    ¦   +---html
+                    ¦           qais-bell-state-correlated-outcomes-lab.html
+                    ¦           
+                    +---qais-angle-encoding-statevectors-lab
+                    ¦   +---data
+                    ¦   ¦       angles_demo.csv
+                    ¦   ¦       README.md
+                    ¦   ¦       
+                    ¦   +---images
+                    ¦   ¦       angles_demo.png
+                    ¦   ¦       README.md
+                    ¦   ¦       
+                    ¦   +---html
+                    ¦           hello-ci.html
+                    ¦           qais-angle-encoding-statevectors-lab.html
+                    ¦           
+                    +---qais-depth-noise-sensitivity-lab
+                    ¦   +---data
+                    ¦   ¦       depth_noise_sweep.csv
+                    ¦   ¦       README.md
+                    ¦   ¦       
+                    ¦   +---images
+                    ¦   ¦       depth_noise_sweep.png
+                    ¦   ¦       README.md
+                    ¦   ¦       
+                    ¦   +---html
+                    ¦           hello-ci.html
+                    ¦           
+                    +---qais-quantum-kernel-svm-vs-logregression-lab
+                    ¦   +---data
+                    ¦   ¦       README.md
+                    ¦   ¦       
+                    ¦   +---images
+                    ¦           README.md
+                    ¦           
+                    +---qais-zz-expectation-scan-lab
+                    ¦   +---data
+                    ¦   +---images
+                    +---qais-BB84-QKD-lab
+                    ¦   +---data
+                    ¦   +---images
+                    +---qais-fidelity-trace-distance-lab
+                    ¦   +---data
+                    ¦   +---images
+                    +---qais-entanglement-tamper-check-lab
+                    ¦   +---data
+                    ¦   +---images
+                    +---qais-VQE-Toy-Minimization-lab
+                    ¦   +---data
+                    ¦   +---images
+                    +---qais-bloch-trajectories-lab
+                    ¦   +---data
+                    ¦   +---images
+                    +---qais-cshs-correlation-sweep-lab
+                    ¦   +---data
+                    ¦   +---images
+                    +---qais-tiny-vqc-vs-logregression-lab
+                    ¦   +---data
+                    ¦   +---images
+                    +---qais-hybrid-pipeline-quantum-kernel-svm-lab
+                    ¦   +---data
+                    ¦   +---images
+                    +---qais-grover-success-vs-noise
+                    ¦   +---data
+                    ¦   +---images
+                    +---qais-density-matrix-encoding-metricies-lab
+                    ¦   +---data
+                    ¦   +---images
+                    +---qais-case-study-qalis-vs-crqc-llm-lab
+                        +---data
+                        +---images

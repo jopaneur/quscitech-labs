@@ -55,6 +55,7 @@ jobs:
       # Runs only on manual dispatch for safety. Remove after a clean deploy.
       - name: 🧹 One-time server cleanup (SSH)
         if: ${{ github.event_name == 'workflow_dispatch' }}
+        continue-on-error: true
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SFTP_HOST_PUBLIC }}          # qram.quscitech.com

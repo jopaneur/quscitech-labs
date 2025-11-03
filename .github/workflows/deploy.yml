@@ -1,15 +1,15 @@
 name: Deploy to QuSciTech (SFTP) + Smoke Test
 
-# PUBLIC deploy (ships /public only)
-
 on:
   push:
     branches: [ main ]
     paths:
       - 'public/**'
+      - 'public_html/**'
+      - 'tools/**'
       - '.github/workflows/deploy.yml'
   schedule:
-    - cron: '0 9 * * *'        # Daily at 09:00 UTC
+    - cron: '0 9 * * *'    # Daily at 09:00 UTC (optional)
   workflow_dispatch: {}
 
 env:
@@ -24,16 +24,40 @@ jobs:
       - name: 🧰 Checkout
         uses: actions/checkout@v4
 
-      - name: 📝 Ensure smoke-test file exists
-        run: |
-          mkdir -p public
-          [ -f public/hello-ci.html ] || cat > public/hello-ci.html <<'HTML'
-          <!doctype html><meta charset="utf-8">
-          <title>QuSciTech CI Smoke Test</title>
-          <h1>✅ CI/CD is working</h1>
-          <p>Built at: $(date -u)</p>
-          HTML
+      # ---------- Build artifacts (exporters) ----------
+      - name: 🐍 Setup Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
 
+      - name: 📦 Install exporter deps
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install matplotlib numpy
+
+      - name: 🧪 Run exporters (Beginner labs)
+        run: bash tools/export_all_beginners.sh
+
+      - name: 🔁 Sync exported assets into web tree
+        run: bash tools/sync_public_assets.sh
+
+      - name: ✅ Verify public lab structure (optional)
+        run: python3 tools/verify_lab_structure.py --all
+
+      # ---------- Ensure smoke file exists in web tree ----------
+      - name: 📝 Ensure smoke-test file exists (web tree)
+        run: |
+          mkdir -p public_html/instructors/QST-INST-2025/resources
+          if [ ! -f public_html/instructors/QST-INST-2025/resources/hello-ci.html ]; then
+            cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
+            <!doctype html><meta charset="utf-8">
+            <title>QuSciTech CI Smoke Test</title>
+            <h1>✅ CI/CD is working</h1>
+            <p>Built at: $(date -u)</p>
+            HTML
+          fi
+
+      # ---------- Network sanity check ----------
       - name: 🔎 Probe SFTP port 22
         run: |
           set -e
@@ -45,33 +69,41 @@ jobs:
             echo "❌ Port 22 NOT reachable"; exit 1
           fi
 
+      # ---------- Upload public_html/** to /home/quscitech/public_html ----------
       - name: 📤 Upload via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server:      ${{ secrets.SFTP_HOST }}
           username:    ${{ secrets.SFTP_USER }}
           password:    ${{ secrets.SFTP_PASSWORD }}
-          local_path:  ./public/
-          remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
+          local_path:  public_html/*
+          remote_path: /home/quscitech/public_html
           sftp_only:   true
           args: -o StrictHostKeyChecking=no
 
+      # ---------- HTTP smoke test ----------
       - name: 🌐 Verify file reachable (curl smoke test with retry)
         env:
-          VPS_IP: ${{ secrets.VPS_IP }}
+          VPS_IP: ${{ secrets.VPS_IP }}  # optional but recommended for DNS override
         run: |
           set -e
           URL="https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
           echo "Checking $URL"
           for i in {1..8}; do
-            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
-              echo "✅ Smoke test passed"; exit 0
+            if [ -n "${VPS_IP}" ]; then
+              if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
+                echo "✅ Smoke test passed"; exit 0
+              fi
+            else
+              if curl -fsSIL "$URL"; then
+                echo "✅ Smoke test passed"; exit 0
+              fi
             fi
             echo "⏳ Waiting and retrying ($i/8)..."; sleep 5
           done
           echo "❌ Smoke test failed: file not reachable" >&2; exit 1
 
-      # ---------- Email notice (optional; runs only if all SMTP secrets are set) ----------
+      # ---------- Optional email notification ----------
       - name: 🔐 Decide if SMTP step should run
         env:
           SMTP_HOST:     ${{ secrets.SMTP_HOST }}
@@ -102,11 +134,10 @@ jobs:
           from:           ${{ secrets.MAIL_FROM }}
           to:             ${{ secrets.MAIL_TO }}
           subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
-          secure: ${{ env.SMTP_PORT == '465' }}   # SSL for 465; STARTTLS auto for 587
+          secure: ${{ env.SMTP_PORT == '465' }}
           body: |
-            ✅ Deployment completed to ${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_REMOTE_DIR }}
+            ✅ Deployment completed to ${{ secrets.SFTP_HOST }}:/home/quscitech/public_html
             🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
             Repo: ${{ github.repository }}
             Commit: ${{ github.sha }}
             By: ${{ github.actor }}
-

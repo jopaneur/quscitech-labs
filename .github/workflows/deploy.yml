@@ -1,4 +1,4 @@
-name: Deploy to QuSciTech (SFTP) + Smoke Test (PUBLIC)
+name: Deploy to QuSciTech (SFTP) + Smoke Test
 
 on:
   push:
@@ -11,42 +11,30 @@ on:
 
 env:
   WEB_HOSTNAME: quscitech.com
-  # We’ll check BOTH root and instructors path
-  SMOKE_PATH1: hello-ci.html
-  SMOKE_PATH2: instructors/QST-INST-2025/resources/hello-ci.html
+  SMOKE_PATH: instructors/QST-INST-2025/resources/hello-ci.html
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: 🧰 Checkout
         uses: actions/checkout@v4
 
-      # (optional) exporters + sync steps here if you use them…
+      # (Optional) if you generate/rsync assets into public_html/ earlier, keep those steps here
 
-      - name: 📝 Ensure smoke-test files exist in LOCAL web tree
+      - name: 📝 Ensure smoke-test file exists (PUBLIC)
         run: |
           set -e
-          # root smoke
-          mkdir -p public_html
-          cat > public_html/hello-ci.html <<'HTML'
-          <!doctype html><meta charset="utf-8">
-          <title>QuSciTech Root Smoke</title>
-          <h1>✅ Root smoke OK</h1>
-          <p>Built at: $(date -u)</p>
-          HTML
-          # instructors smoke
           mkdir -p public_html/instructors/QST-INST-2025/resources
-          cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
+          [ -f public_html/instructors/QST-INST-2025/resources/hello-ci.html ] || cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
           <!doctype html><meta charset="utf-8">
-          <title>QuSciTech Instructors Smoke</title>
-          <h1>✅ Instructors smoke OK</h1>
+          <title>QuSciTech CI Smoke Test</title>
+          <h1>✅ CI/CD is working</h1>
           <p>Built at: $(date -u)</p>
           HTML
-          echo "Local tree:"
-          find public_html -maxdepth 3 -type f -name "*hello-ci.html" -print
 
-      - name: 🔎 Probe SFTP port 22 (PUBLIC host)
+      - name: 🔎 Probe SFTP port 22
         run: |
           set -e
           HOST="${{ secrets.SFTP_HOST_PUBLIC }}"
@@ -57,57 +45,69 @@ jobs:
             echo "❌ Port 22 NOT reachable"; exit 1
           fi
 
-      - name: 📤 Upload via SFTP (PUBLIC docroot)
+      - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server:      ${{ secrets.SFTP_HOST_PUBLIC }}
           username:    ${{ secrets.SFTP_USER_PUBLIC }}
           password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}
-          local_path:  ./public_html/
-          remote_path: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}   # /home/quscitech/public_html
+          # Copy the CONTENTS of public_html (note the /*) into the docroot on the server
+          local_path:  "public_html/*"
+          remote_path: "/home/quscitech/public_html"
           sftp_only:   true
           args: -o StrictHostKeyChecking=no
 
-      # NEW: Immediately list the target locations over SSH to see what's actually there
-      - name: 🧾 Verify files on server (ls)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host:     ${{ secrets.SFTP_HOST_PUBLIC }}
-          username: ${{ secrets.SFTP_USER_PUBLIC }}
-          password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}
-          script: |
-            set -e
-            echo "== pwd and whoami =="
-            pwd; whoami
-            echo "== List docroot =="
-            ls -al /home/quscitech/public_html | sed -n '1,120p'
-            echo "== List root smoke =="
-            ls -al /home/quscitech/public_html/hello-ci.html || true
-            echo "== List instructors dir =="
-            ls -al /home/quscitech/public_html/instructors || true
-            echo "== List QST-INST-2025 =="
-            ls -al /home/quscitech/public_html/instructors/QST-INST-2025 || true
-            echo "== List resources =="
-            ls -al /home/quscitech/public_html/instructors/QST-INST-2025/resources || true
-            echo "== Stat resources smoke =="
-            stat /home/quscitech/public_html/instructors/QST-INST-2025/resources/hello-ci.html || true
-
-      - name: 🌐 Curl checks (root then instructors) with retry
+      - name: 🌐 Verify file reachable (curl smoke test with retry)
         env:
-          VPS_IP: ${{ secrets.VPS_IP_PUBLIC }}   # 37.148.203.89
+          VPS_IP: ${{ secrets.VPS_IP_PUBLIC }}
         run: |
           set -e
-          for path in "${{ env.SMOKE_PATH1 }}" "${{ env.SMOKE_PATH2 }}"; do
-            URL="https://${{ env.WEB_HOSTNAME }}/${path}"
-            echo "Checking $URL"
-            ok=0
-            for i in {1..8}; do
-              if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
-                echo "✅ $path reachable"
-                ok=1; break
-              fi
-              echo "⏳ retry ($i/8)…"; sleep 5
-            done
-            [ $ok -eq 1 ] || { echo "❌ $path not reachable"; exit 1; }
+          URL="https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
+          echo "Checking $URL"
+          for i in {1..8}; do
+            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
+              echo "✅ Smoke test passed"; exit 0
+            fi
+            echo "⏳ Waiting and retrying ($i/8)..."; sleep 5
           done
+          echo "❌ Smoke test failed: file not reachable" >&2; exit 1
+
+      # ---------- Optional email notice ----------
+      - name: 🔐 Decide if SMTP step should run
+        env:
+          SMTP_HOST:     ${{ secrets.SMTP_HOST }}
+          SMTP_PORT_SEC: ${{ secrets.SMTP_PORT }}
+          SMTP_USER:     ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASS:     ${{ secrets.SMTP_PASSWORD }}
+          MAIL_FROM_SEC: ${{ secrets.MAIL_FROM }}
+          MAIL_TO_SEC:   ${{ secrets.MAIL_TO }}
+        run: |
+          set -e
+          if [ -n "${SMTP_HOST}" ] && [ -n "${SMTP_PORT_SEC}" ] && \
+             [ -n "${SMTP_USER}" ] && [ -n "${SMTP_PASS}" ] && \
+             [ -n "${MAIL_FROM_SEC}" ] && [ -n "${MAIL_TO_SEC}" ]; then
+            echo "HAS_SMTP=true" >> "$GITHUB_ENV"
+            echo "SMTP_PORT=${SMTP_PORT_SEC}" >> "$GITHUB_ENV"
+          else
+            echo "HAS_SMTP=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: ✉️ Send deploy email
+        if: env.HAS_SMTP == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port:    ${{ env.SMTP_PORT }}
+          username:       ${{ secrets.SMTP_USERNAME }}
+          password:       ${{ secrets.SMTP_PASSWORD }}
+          from:           ${{ secrets.MAIL_FROM }}
+          to:             ${{ secrets.MAIL_TO }}
+          subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
+          secure: ${{ env.SMTP_PORT == '465' }}
+          body: |
+            ✅ Deployment completed to ${{ secrets.SFTP_HOST_PUBLIC }}:/home/quscitech/public_html
+            🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
+            Repo: ${{ github.repository }}
+            Commit: ${{ github.sha }}
+            By: ${{ github.actor }}
 

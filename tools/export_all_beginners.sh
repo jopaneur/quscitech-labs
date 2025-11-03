@@ -1,25 +1,33 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -euo pipefail
 
-# ---- Config ----------------------------------------------------------
-PY="py -3.13"
+# pick a cross-platform python
+if command -v python3 >/dev/null 2>&1; then
+  PYCMD=python3
+elif command -v py >/dev/null 2>&1; then
+  PYCMD="py -3.13"
+elif command -v python >/dev/null 2>&1; then
+  PYCMD=python
+else
+  echo "No Python found (need python3/py/python)"; exit 1
+fi
 
 LABS_ROOT="public/labs/Beginner_Labs"
-declare -A LABS
-LABS[qais-superposition-lab]="export_superposition.py"
-LABS[qais-angle-encoding-statevectors-lab]="export_angle_encoding.py"
-LABS[qais-depth-noise-sensitivity-lab]="export_depth_noise.py"
-LABS[qais-quantum-teleportation-lab]="export_teleportation.py"
+declare -A LABS=(
+  [qais-superposition-lab]="export_superposition.py"
+  [qais-angle-encoding-statevectors-lab]="export_angle_encoding.py"
+  [qais-depth-noise-sensitivity-lab]="export_depth_noise.py"
+  [qais-quantum-teleportation-lab]="export_teleportation.py"
+)
 
-# ---- Helpers ---------------------------------------------------------
 mk_exporter() {
-  local lab="$1"; local pyfile="$2"
+  local lab="$1" pyfile="$2"
   local CODE="$LABS_ROOT/$lab/resources/assets/code"
   local DATA="$LABS_ROOT/$lab/resources/assets/data"
   local IMGS="$LABS_ROOT/$lab/resources/assets/images"
-
   mkdir -p "$CODE" "$DATA" "$IMGS"
 
+  # keep existing exporters if present
   if [[ -f "$CODE/$pyfile" ]]; then
     echo "  = exists    $CODE/$pyfile"
     return 0
@@ -42,18 +50,14 @@ IMGS.mkdir(parents=True, exist_ok=True)
 csv_path = DATA / "superposition_probs.csv"
 png_path = IMGS / "superposition_probs.png"
 
-# Single-qubit |+> and |-> measurement probabilities in Z-basis
 thetas = np.linspace(0, 2*math.pi, 41)
 rows = [("theta_rad","p0","p1")]
 for t in thetas:
-    a0 = math.cos(t/2)
-    a1 = math.sin(t/2)
-    p0 = a0*a0
-    p1 = a1*a1
-    rows.append((t, p0, p1))
+    a0 = math.cos(t/2); a1 = math.sin(t/2)
+    rows.append((t, a0*a0, a1*a1))
 
 with open(csv_path, "w", newline="", encoding="utf-8") as f:
-    w = csv.writer(f); w.writerows(rows)
+    csv.writer(f).writerows(rows)
 
 plt.figure()
 plt.title("Superposition: Probabilities vs θ")
@@ -105,7 +109,7 @@ PY
     qais-depth-noise-sensitivity-lab)
       cat > "$CODE/$pyfile" <<'PY'
 from pathlib import Path
-import csv, math, random
+import csv, random
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -118,13 +122,12 @@ IMGS.mkdir(parents=True, exist_ok=True)
 csv_path = DATA / "depth_noise_sweep.csv"
 png_path = IMGS / "depth_noise_sweep.png"
 
-# Toy model: accuracy decays with depth and noise
 depths = np.arange(1, 21)
 noise = 0.02
 rows = [("depth","noise","accuracy")]
 for d in depths:
     acc = max(0.0, 1.0 - 0.03*d - noise*10 + random.uniform(-0.02,0.02))
-    rows.append((d, noise, acc))
+    rows.append((int(d), float(noise), float(acc)))
 
 with open(csv_path, "w", newline="", encoding="utf-8") as f:
     csv.writer(f).writerows(rows)
@@ -155,11 +158,9 @@ IMGS.mkdir(parents=True, exist_ok=True)
 csv_path = DATA / "teleportation_fidelity.csv"
 png_path = IMGS / "teleportation_fidelity.png"
 
-# Toy fidelity table for demo (source vs received state overlap)
 thetas = np.linspace(0, np.pi, 13)
 rows = [("theta_rad","fidelity")]
 for t in thetas:
-    # simple smooth curve between 0.9 and ~0.99
     fid = 0.95 + 0.04*np.cos(t)
     rows.append((float(t), float(fid)))
 
@@ -176,25 +177,23 @@ print(f"✅ Wrote: {csv_path}")
 print(f"✅ Wrote: {png_path}")
 PY
       ;;
-    *)
-      echo "  ! Unknown lab: $lab" ;;
+    *) echo "  ! Unknown lab: $lab" ;;
   esac
 
   echo "  + wrote     $CODE/$pyfile"
 }
 
 run_exporter() {
-  local lab="$1"; local pyfile="$2"
+  local lab="$1" pyfile="$2"
   local CODE="$LABS_ROOT/$lab/resources/assets/code"
   echo "  → running   $pyfile"
-  $PY "$CODE/$pyfile"
+  $PYCMD "$CODE/$pyfile"
 }
 
 check_artifacts() {
   local lab="$1"
   local DATA="$LABS_ROOT/$lab/resources/assets/data"
   local IMGS="$LABS_ROOT/$lab/resources/assets/images"
-
   local have_csv=$(ls "$DATA"/*.csv 2>/dev/null | wc -l | tr -d ' ')
   local have_png=$(ls "$IMGS"/*.png 2>/dev/null | wc -l | tr -d ' ')
   if [[ "$have_csv" -gt 0 && "$have_png" -gt 0 ]]; then
@@ -204,21 +203,14 @@ check_artifacts() {
   fi
 }
 
-# ---- Main ------------------------------------------------------------
 echo "→ Creating and running Beginner lab exporters…"
 for lab in "${!LABS[@]}"; do
-  echo
-  echo "— $lab"
-  if [[ ! -d "$LABS_ROOT/$lab" ]]; then
-    echo "  ⚠ missing lab directory: $LABS_ROOT/$lab"
-    continue
-  fi
+  echo; echo "— $lab"
+  [[ -d "$LABS_ROOT/$lab" ]] || { echo "  ⚠ missing lab directory: $LABS_ROOT/$lab"; continue; }
   mk_exporter "$lab" "${LABS[$lab]}"
   run_exporter "$lab" "${LABS[$lab]}"
   check_artifacts "$lab"
 done
 
-echo
-echo "Done. You can verify with:"
-echo "  py -3.13 tools/verify_lab_structure.py --all"
-
+echo; echo "Done. You can verify with:"
+echo "  $PYCMD tools/verify_lab_structure.py --all"

@@ -1,11 +1,11 @@
 name: Deploy to QuSciTech (SFTP) + Smoke Test
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
   push:
     branches: [ main ]
     paths:
-      - 'public_html/instructors/QST-INST-2025/resources/**'
+      - 'public_html/**'
       - '.github/workflows/deploy.yml'
 
 env:
@@ -19,7 +19,7 @@ jobs:
       - name: 🧰 Checkout
         uses: actions/checkout@v4
 
-      - name: 📝 Ensure smoke-test file exists (local tree)
+      - name: 📝 Ensure smoke-test file exists in web tree
         run: |
           mkdir -p public_html/instructors/QST-INST-2025/resources/
           [ -f public_html/instructors/QST-INST-2025/resources/hello-ci.html ] || cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
@@ -29,14 +29,24 @@ jobs:
           <p>Built at: $(date -u)</p>
           HTML
 
-      - name: 📤 Upload via SFTP (PUBLIC)
+      - name: 🔎 Probe SFTP port 22
+        run: |
+          set -e
+          HOST="${{ secrets.SFTP_HOST }}"
+          echo "Probing $HOST:22 ..."
+          if timeout 5 bash -lc "cat < /dev/null > /dev/tcp/$HOST/22"; then
+            echo "✅ Port 22 reachable"
+          else
+            echo "❌ Port 22 NOT reachable"; exit 1
+          fi
+
+      - name: 📤 Upload via SFTP (PUBLIC root)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server:      ${{ secrets.SFTP_HOST }}
           username:    ${{ secrets.SFTP_USER }}
           password:    ${{ secrets.SFTP_PASSWORD }}
-          # upload just the public subtree we care about:
-          local_path:  public_html/instructors/QST-INST-2025/resources/*
+          local_path:  ./public_html/*
           remote_path: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}
           sftp_only:   true
           args: -o StrictHostKeyChecking=no
@@ -55,3 +65,4 @@ jobs:
             echo "⏳ Waiting and retrying ($i/8)..."; sleep 5
           done
           echo "❌ Smoke test failed: file not reachable" >&2; exit 1
+

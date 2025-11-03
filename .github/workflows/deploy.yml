@@ -1,12 +1,14 @@
 name: Deploy to QuSciTech (SFTP) + Smoke Test
 
 on:
-  workflow_dispatch:
   push:
     branches: [ main ]
     paths:
       - 'public_html/**'
+      - 'public/**'
+      - 'tools/**'
       - '.github/workflows/deploy.yml'
+  workflow_dispatch: {}
 
 env:
   WEB_HOSTNAME: quscitech.com
@@ -16,44 +18,24 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: 🧰 Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 📝 Ensure smoke-test file exists in web tree
-        run: |
-          mkdir -p public_html/instructors/QST-INST-2025/resources/
-          [ -f public_html/instructors/QST-INST-2025/resources/hello-ci.html ] || cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
-          <!doctype html><meta charset="utf-8">
-          <title>QuSciTech CI Smoke Test</title>
-          <h1>✅ CI/CD is working</h1>
-          <p>Built at: $(date -u)</p>
-          HTML
+      # (Optional) exporters + sync steps stay as you have them…
 
-      - name: 🔎 Probe SFTP port 22
-        run: |
-          set -e
-          HOST="${{ secrets.SFTP_HOST }}"
-          echo "Probing $HOST:22 ..."
-          if timeout 5 bash -lc "cat < /dev/null > /dev/tcp/$HOST/22"; then
-            echo "✅ Port 22 reachable"
-          else
-            echo "❌ Port 22 NOT reachable"; exit 1
-          fi
-
-      - name: 📤 Upload via SFTP (PUBLIC root)
+      - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server:      ${{ secrets.SFTP_HOST }}
-          username:    ${{ secrets.SFTP_USER }}
-          password:    ${{ secrets.SFTP_PASSWORD }}
-          local_path:  ./public_html/*
-          remote_path: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}
+          server:      ${{ secrets.SFTP_HOST_PUBLIC }}
+          username:    ${{ secrets.SFTP_USER_PUBLIC }}
+          password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}
+          local_path:  ./public_html/
+          remote_path: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}   # <- /home/quscitech/public_html
           sftp_only:   true
           args: -o StrictHostKeyChecking=no
 
       - name: 🌐 Verify file reachable (curl smoke test with retry)
         env:
-          VPS_IP: ${{ secrets.VPS_IP }}
+          VPS_IP: ${{ secrets.VPS_IP_PUBLIC }}                 # <- use the PUBLIC IP secret
         run: |
           set -e
           URL="https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"

@@ -51,6 +51,67 @@ jobs:
             echo "❌ Port 22 NOT reachable"; exit 1
           fi
 
+      # ---------- ONE-TIME SERVER CLEANUP (SSH) ----------
+      # Runs only on manual dispatch for safety. Remove after a clean deploy.
+      - name: 🧹 One-time server cleanup (SSH)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTP_HOST_PUBLIC }}          # qram.quscitech.com
+          username: ${{ secrets.SFTP_USER_PUBLIC }}      # quscitech
+          password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}  # same creds you use for SFTP
+          port: 22
+          script: |
+            set -euo pipefail
+
+            PUBLIC_ROOT="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
+            PRIVATE_ROOT="/home/quscitech/public_html/private/instructors/QST-INST-2025/resources"
+
+            echo "== BEFORE CLEANUP (depth 2) =="
+            find "$PUBLIC_ROOT"  -maxdepth 2 -type d | sort || true
+            echo "---"
+            find "$PRIVATE_ROOT" -maxdepth 2 -type d | sort || true
+            echo "================================"
+
+            # A) Remove stray nested 'public' folder
+            if [ -d "$PUBLIC_ROOT/public" ]; then
+              echo "Removing: $PUBLIC_ROOT/public"
+              rm -rf "$PUBLIC_ROOT/public"
+            fi
+
+            # B) Remove nested labs directory under private path
+            if [ -d "$PRIVATE_ROOT/labs/labs" ]; then
+              echo "Removing: $PRIVATE_ROOT/labs/labs"
+              rm -rf "$PRIVATE_ROOT/labs/labs"
+            fi
+
+            # C) Remove old Advanced lab misspellings (server leftovers)
+            for bad in \
+              "$PUBLIC_ROOT/labs/qais-cshs-correlation-sweep-lab" \
+              "$PUBLIC_ROOT/labs/qais-density-matrix-encoding-metricies-lab" \
+              "$PRIVATE_ROOT/labs/qais-cshs-correlation-sweep-lab" \
+              "$PRIVATE_ROOT/labs/qais-density-matrix-encoding-metricies-lab"
+            do
+              if [ -d "$bad" ]; then
+                echo "Removing stale folder: $bad"
+                rm -rf "$bad"
+              fi
+            done
+
+            # D) Ensure expected directories exist
+            mkdir -p "$PUBLIC_ROOT/labs"  "$PUBLIC_ROOT/assets"  "$PUBLIC_ROOT/html"
+            mkdir -p "$PRIVATE_ROOT/labs" "$PRIVATE_ROOT/assets" "$PRIVATE_ROOT/html"
+
+            # E) Friendly perms (optional)
+            find "$PUBLIC_ROOT"  -type d -exec chmod 755 {} \; || true
+            find "$PUBLIC_ROOT"  -type f -exec chmod 644 {} \; || true
+
+            echo "== AFTER CLEANUP (depth 2) =="
+            find "$PUBLIC_ROOT"  -maxdepth 2 -type d | sort
+            echo "---"
+            find "$PRIVATE_ROOT" -maxdepth 2 -type d | sort
+            echo "================================"
+
       - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -109,10 +170,11 @@ jobs:
           from:           ${{ secrets.MAIL_FROM }}
           to:             ${{ secrets.MAIL_TO }}
           subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
-          secure: ${{ env.SMTP_PORT == '465' }}
+          secure: ${{ env.SMTP_PORT == '465' }}  # Port 587 uses STARTTLS (secure=false)
           body: |
             ✅ Deployment completed to ${{ secrets.SFTP_HOST_PUBLIC }}:/home/quscitech/public_html
             🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
             Repo: ${{ github.repository }}
             Commit: ${{ github.sha }}
             By: ${{ github.actor }}
+

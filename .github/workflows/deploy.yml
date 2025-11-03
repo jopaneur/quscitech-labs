@@ -21,7 +21,7 @@ jobs:
       - name: 🧰 Checkout
         uses: actions/checkout@v4
 
-      # (Optional) if you generate/rsync assets into public_html/ earlier, keep those steps here
+      # If you generate/sync lab assets into public_html/, keep those steps here
 
       - name: 📝 Ensure smoke-test file exists (PUBLIC)
         run: |
@@ -33,6 +33,8 @@ jobs:
           <h1>✅ CI/CD is working</h1>
           <p>Built at: $(date -u)</p>
           HTML
+          echo "---- DIAG: tree under resources ----"
+          ls -lah public_html/instructors/QST-INST-2025/resources || true
 
       - name: 🔎 Probe SFTP port 22
         run: |

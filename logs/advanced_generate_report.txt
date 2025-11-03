@@ -1,0 +1,65 @@
+============================================================
+QuSciTech Labs — Advanced README + Smoke Artifact Pass
+UTC: 2025-11-03T18:28:24Z
+Repo: /g/My Drive/GitHub/quscitech-labs
+Target: public/labs/Advanced_Labs
+============================================================
+
+→ qais-bloch-trajectories-lab
+   - created: assets/data/README.md
+   - created: assets/images/README.md
+   - wrote:   assets/data/smoke_qais-bloch-trajectories-lab.csv
+   - wrote:   assets/images/smoke_qais-bloch-trajectories-lab.png
+   - wrote:   html/smoke_qais-bloch-trajectories-lab.html
+   - wrote:   README_Lab_Standard.md
+
+→ qais-case-study-qalis-vs-crqc-llm-lab
+   - created: assets/data/README.md
+   - created: assets/images/README.md
+   - wrote:   assets/data/smoke_qais-case-study-qalis-vs-crqc-llm-lab.csv
+   - wrote:   assets/images/smoke_qais-case-study-qalis-vs-crqc-llm-lab.png
+   - wrote:   html/smoke_qais-case-study-qalis-vs-crqc-llm-lab.html
+   - wrote:   README_Lab_Standard.md
+
+→ qais-cshs-correlation-sweep-lab
+   - created: assets/data/README.md
+   - created: assets/images/README.md
+   - wrote:   assets/data/smoke_qais-cshs-correlation-sweep-lab.csv
+   - wrote:   assets/images/smoke_qais-cshs-correlation-sweep-lab.png
+   - wrote:   html/smoke_qais-cshs-correlation-sweep-lab.html
+   - wrote:   README_Lab_Standard.md
+
+→ qais-density-matrix-encoding-metricies-lab
+   - created: assets/data/README.md
+   - created: assets/images/README.md
+   - wrote:   assets/data/smoke_qais-density-matrix-encoding-metricies-lab.csv
+   - wrote:   assets/images/smoke_qais-density-matrix-encoding-metricies-lab.png
+   - wrote:   html/smoke_qais-density-matrix-encoding-metricies-lab.html
+   - wrote:   README_Lab_Standard.md
+
+→ qais-grover-success-vs-noise
+   - created: assets/data/README.md
+   - created: assets/images/README.md
+   - wrote:   assets/data/smoke_qais-grover-success-vs-noise.csv
+   - wrote:   assets/images/smoke_qais-grover-success-vs-noise.png
+   - wrote:   html/smoke_qais-grover-success-vs-noise.html
+   - wrote:   README_Lab_Standard.md
+
+→ qais-hybrid-pipeline-quantum-kernel-svm-lab
+   - created: assets/data/README.md
+   - created: assets/images/README.md
+   - wrote:   assets/data/smoke_qais-hybrid-pipeline-quantum-kernel-svm-lab.csv
+   - wrote:   assets/images/smoke_qais-hybrid-pipeline-quantum-kernel-svm-lab.png
+   - wrote:   html/smoke_qais-hybrid-pipeline-quantum-kernel-svm-lab.html
+   - wrote:   README_Lab_Standard.md
+
+→ qais-tiny-vqc-vs-logregression-lab
+   - created: assets/data/README.md
+   - created: assets/images/README.md
+   - wrote:   assets/data/smoke_qais-tiny-vqc-vs-logregression-lab.csv
+   - wrote:   assets/images/smoke_qais-tiny-vqc-vs-logregression-lab.png
+   - wrote:   html/smoke_qais-tiny-vqc-vs-logregression-lab.html
+   - wrote:   README_Lab_Standard.md
+
+✓ Completed README + smoke generation for Advanced labs.
+============================================================

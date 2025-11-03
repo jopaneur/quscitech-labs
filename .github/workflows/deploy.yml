@@ -1,14 +1,12 @@
 name: Deploy to QuSciTech (SFTP) + Smoke Test
 
 on:
+  workflow_dispatch: {}
   push:
     branches: [ main ]
     paths:
-      - 'public/**'
-      - 'public_html/**'
-      - 'tools/**'
+      - 'public_html/instructors/QST-INST-2025/resources/**'
       - '.github/workflows/deploy.yml'
-  workflow_dispatch: {}
 
 env:
   WEB_HOSTNAME: quscitech.com
@@ -21,58 +19,28 @@ jobs:
       - name: 🧰 Checkout
         uses: actions/checkout@v4
 
-      # --- Build & stage artifacts into the web tree in the repo ---
-      - name: 🐍 Set up Python (for exporters)
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
-      - name: 📦 Install deps for exporters
+      - name: 📝 Ensure smoke-test file exists (local tree)
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install matplotlib numpy
-
-      - name: 🧪 Run exporters (Beginner labs)
-        run: bash tools/export_all_beginners.sh
-
-      - name: 🔁 Sync exported assets into web tree
-        run: bash tools/sync_public_assets.sh
-
-      # --- Ensure smoke file exists in the exact path curl will hit ---
-      - name: 📝 Ensure smoke-test file exists (under public_html/)
-        run: |
-          mkdir -p public_html/instructors/QST-INST-2025/resources
-          cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
+          mkdir -p public_html/instructors/QST-INST-2025/resources/
+          [ -f public_html/instructors/QST-INST-2025/resources/hello-ci.html ] || cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
           <!doctype html><meta charset="utf-8">
           <title>QuSciTech CI Smoke Test</title>
           <h1>✅ CI/CD is working</h1>
-          <p>Built at: <!-- will be static when built on runner --></p>
+          <p>Built at: $(date -u)</p>
           HTML
 
-      # --- Upload the web tree to the real docroot on the server ---
-      - name: 🔐 Probe SFTP port 22
-        run: |
-          set -e
-          HOST="${{ secrets.SFTP_HOST }}"
-          echo "Probing $HOST:22 ..."
-          if timeout 5 bash -lc "cat < /dev/null > /dev/tcp/$HOST/22"; then
-            echo "✅ Port 22 reachable"
-          else
-            echo "❌ Port 22 NOT reachable"; exit 1
-          fi
-
-      - name: 📤 Upload via SFTP (public_html/** -> /home/quscitech/public_html)
+      - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server:      ${{ secrets.SFTP_HOST }}
           username:    ${{ secrets.SFTP_USER }}
           password:    ${{ secrets.SFTP_PASSWORD }}
-          local_path:  public_html/*
-          remote_path: /home/quscitech/public_html
+          # upload just the public subtree we care about:
+          local_path:  public_html/instructors/QST-INST-2025/resources/*
+          remote_path: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}
           sftp_only:   true
           args: -o StrictHostKeyChecking=no
 
-      # --- Verify the file is reachable over HTTPS (8 retries) ---
       - name: 🌐 Verify file reachable (curl smoke test with retry)
         env:
           VPS_IP: ${{ secrets.VPS_IP }}
@@ -87,4 +55,3 @@ jobs:
             echo "⏳ Waiting and retrying ($i/8)..."; sleep 5
           done
           echo "❌ Smoke test failed: file not reachable" >&2; exit 1
-

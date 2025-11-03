@@ -8,29 +8,27 @@ on:
       - 'public_html/**'
       - 'tools/**'
       - '.github/workflows/deploy.yml'
-  schedule:
-    - cron: '0 9 * * *'    # Daily at 09:00 UTC (optional)
   workflow_dispatch: {}
 
 env:
   WEB_HOSTNAME: quscitech.com
+  # Path relative to https://quscitech.com/
   SMOKE_PATH: instructors/QST-INST-2025/resources/hello-ci.html
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: 🧰 Checkout
         uses: actions/checkout@v4
 
-      # ---------- Build artifacts (exporters) ----------
-      - name: 🐍 Setup Python 3.13
+      # --- (optional) build artifacts & sync them into web tree ---
+      - name: 🐍 Set up Python (for exporters)
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-      - name: 📦 Install exporter deps
+      - name: 📦 Install deps for exporters
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install matplotlib numpy
@@ -38,26 +36,23 @@ jobs:
       - name: 🧪 Run exporters (Beginner labs)
         run: bash tools/export_all_beginners.sh
 
-      - name: 🔁 Sync exported assets into web tree
+      - name: 🔄 Sync exported assets into web tree
         run: bash tools/sync_public_assets.sh
 
-      - name: ✅ Verify public lab structure (optional)
+      - name: ✅ (Optional) Verify structure
         run: python3 tools/verify_lab_structure.py --all
 
-      # ---------- Ensure smoke file exists in web tree ----------
-      - name: 📝 Ensure smoke-test file exists (web tree)
+      # --- ensure smoke file exists in the web tree we upload ---
+      - name: 📝 Ensure smoke-test file exists in public_html
         run: |
-          mkdir -p public_html/instructors/QST-INST-2025/resources
-          if [ ! -f public_html/instructors/QST-INST-2025/resources/hello-ci.html ]; then
-            cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
-            <!doctype html><meta charset="utf-8">
-            <title>QuSciTech CI Smoke Test</title>
-            <h1>✅ CI/CD is working</h1>
-            <p>Built at: $(date -u)</p>
-            HTML
-          fi
+          mkdir -p public_html/instructors/QST-INST-2025/resources/
+          cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
+          <!doctype html><meta charset="utf-8">
+          <title>QuSciTech CI Smoke Test</title>
+          <h1>✅ CI/CD is working</h1>
+          <p>Built at: <!-- CI will upload this file --></p>
+          HTML
 
-      # ---------- Network sanity check ----------
       - name: 🔎 Probe SFTP port 22
         run: |
           set -e
@@ -69,75 +64,29 @@ jobs:
             echo "❌ Port 22 NOT reachable"; exit 1
           fi
 
-      # ---------- Upload public_html/** to /home/quscitech/public_html ----------
-      - name: 📤 Upload via SFTP
+      - name: 📤 Upload via SFTP (deploy public_html/**)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server:      ${{ secrets.SFTP_HOST }}
           username:    ${{ secrets.SFTP_USER }}
-          password:    ${{ secrets.SFTP_PASSWORD }}
+          password:    ${{ secrets.SFTP_PASS }}   # <- make sure secret name matches!
           local_path:  public_html/*
           remote_path: /home/quscitech/public_html
           sftp_only:   true
           args: -o StrictHostKeyChecking=no
 
-      # ---------- HTTP smoke test ----------
       - name: 🌐 Verify file reachable (curl smoke test with retry)
         env:
-          VPS_IP: ${{ secrets.VPS_IP }}  # optional but recommended for DNS override
+          VPS_IP: ${{ secrets.VPS_IP }}
         run: |
           set -e
           URL="https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
           echo "Checking $URL"
           for i in {1..8}; do
-            if [ -n "${VPS_IP}" ]; then
-              if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
-                echo "✅ Smoke test passed"; exit 0
-              fi
-            else
-              if curl -fsSIL "$URL"; then
-                echo "✅ Smoke test passed"; exit 0
-              fi
+            # use --resolve to bypass any stale DNS
+            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
+              echo "✅ Smoke test passed"; exit 0
             fi
             echo "⏳ Waiting and retrying ($i/8)..."; sleep 5
           done
           echo "❌ Smoke test failed: file not reachable" >&2; exit 1
-
-      # ---------- Optional email notification ----------
-      - name: 🔐 Decide if SMTP step should run
-        env:
-          SMTP_HOST:     ${{ secrets.SMTP_HOST }}
-          SMTP_PORT_SEC: ${{ secrets.SMTP_PORT }}
-          SMTP_USER:     ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASS:     ${{ secrets.SMTP_PASSWORD }}
-          MAIL_FROM_SEC: ${{ secrets.MAIL_FROM }}
-          MAIL_TO_SEC:   ${{ secrets.MAIL_TO }}
-        run: |
-          set -e
-          if [ -n "${SMTP_HOST}" ] && [ -n "${SMTP_PORT_SEC}" ] && \
-             [ -n "${SMTP_USER}" ] && [ -n "${SMTP_PASS}" ] && \
-             [ -n "${MAIL_FROM_SEC}" ] && [ -n "${MAIL_TO_SEC}" ]; then
-            echo "HAS_SMTP=true" >> "$GITHUB_ENV"
-            echo "SMTP_PORT=${SMTP_PORT_SEC}" >> "$GITHUB_ENV"
-          else
-            echo "HAS_SMTP=false" >> "$GITHUB_ENV"
-          fi
-
-      - name: ✉️ Send deploy email
-        if: env.HAS_SMTP == 'true'
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: ${{ secrets.SMTP_HOST }}
-          server_port:    ${{ env.SMTP_PORT }}
-          username:       ${{ secrets.SMTP_USERNAME }}
-          password:       ${{ secrets.SMTP_PASSWORD }}
-          from:           ${{ secrets.MAIL_FROM }}
-          to:             ${{ secrets.MAIL_TO }}
-          subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
-          secure: ${{ env.SMTP_PORT == '465' }}
-          body: |
-            ✅ Deployment completed to ${{ secrets.SFTP_HOST }}:/home/quscitech/public_html
-            🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
-            Repo: ${{ github.repository }}
-            Commit: ${{ github.sha }}
-            By: ${{ github.actor }}

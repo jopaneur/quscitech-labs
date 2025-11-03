@@ -22,6 +22,10 @@ jobs:
         uses: actions/checkout@v4
 
       # If you generate/sync lab assets into public_html/, keep those steps here
+      # - name: Build/Export Public Assets
+      #   run: |
+      #     bash tools/export_all_beginners.sh
+      #     bash tools/sync_public_assets.sh
 
       - name: 📝 Ensure smoke-test file exists (PUBLIC)
         run: |
@@ -33,7 +37,7 @@ jobs:
           <h1>✅ CI/CD is working</h1>
           <p>Built at: $(date -u)</p>
           HTML
-          echo "---- DIAG: tree under resources ----"
+          echo "---- DIAG: list under resources ----"
           ls -lah public_html/instructors/QST-INST-2025/resources || true
 
       - name: 🔎 Probe SFTP port 22
@@ -112,4 +116,3 @@ jobs:
             Repo: ${{ github.repository }}
             Commit: ${{ github.sha }}
             By: ${{ github.actor }}
-

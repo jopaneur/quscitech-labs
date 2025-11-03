@@ -5,15 +5,15 @@ on:
     branches: [ main ]
     paths:
       - 'public_html/**'
-      - 'public/**'
       - 'tools/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch: {}
 
 env:
   WEB_HOSTNAME: quscitech.com
-  # This is the URL you want to verify after deploy:
-  SMOKE_PATH: instructors/QST-INST-2025/resources/hello-ci.html
+  # We’ll check BOTH root and instructors path
+  SMOKE_PATH1: hello-ci.html
+  SMOKE_PATH2: instructors/QST-INST-2025/resources/hello-ci.html
 
 jobs:
   deploy:
@@ -22,32 +22,29 @@ jobs:
       - name: 🧰 Checkout
         uses: actions/checkout@v4
 
-      # ── (optional) run exporters and sync into public_html ─────────────────────
-      # - name: Set up Python 3.13
-      #   uses: actions/setup-python@v5
-      #   with: { python-version: "3.13" }
-      # - name: Install deps for exporters
-      #   run: |
-      #     python -m pip install --upgrade pip
-      #     python -m pip install matplotlib numpy
-      # - name: Run exporters (Beginner labs)
-      #   run: bash tools/export_all_beginners.sh
-      # - name: Sync exported assets into web tree
-      #   run: bash tools/sync_public_assets.sh
-      # - name: Verify structure (optional)
-      #   run: python tools/verify_lab_structure.py --all
-      # ──────────────────────────────────────────────────────────────────────────
+      # (optional) exporters + sync steps here if you use them…
 
-      - name: 📝 Ensure smoke-test file exists (PUBLIC)
+      - name: 📝 Ensure smoke-test files exist in LOCAL web tree
         run: |
           set -e
-          mkdir -p public_html/instructors/QST-INST-2025/resources
-          [ -f public_html/instructors/QST-INST-2025/resources/hello-ci.html ] || cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
+          # root smoke
+          mkdir -p public_html
+          cat > public_html/hello-ci.html <<'HTML'
           <!doctype html><meta charset="utf-8">
-          <title>QuSciTech CI Smoke Test</title>
-          <h1>✅ CI/CD is working</h1>
+          <title>QuSciTech Root Smoke</title>
+          <h1>✅ Root smoke OK</h1>
           <p>Built at: $(date -u)</p>
           HTML
+          # instructors smoke
+          mkdir -p public_html/instructors/QST-INST-2025/resources
+          cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
+          <!doctype html><meta charset="utf-8">
+          <title>QuSciTech Instructors Smoke</title>
+          <h1>✅ Instructors smoke OK</h1>
+          <p>Built at: $(date -u)</p>
+          HTML
+          echo "Local tree:"
+          find public_html -maxdepth 3 -type f -name "*hello-ci.html" -print
 
       - name: 🔎 Probe SFTP port 22 (PUBLIC host)
         run: |
@@ -60,29 +57,57 @@ jobs:
             echo "❌ Port 22 NOT reachable"; exit 1
           fi
 
-      - name: 📤 Upload via SFTP (PUBLIC)
+      - name: 📤 Upload via SFTP (PUBLIC docroot)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server:      ${{ secrets.SFTP_HOST_PUBLIC }}
           username:    ${{ secrets.SFTP_USER_PUBLIC }}
           password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}
-          local_path:  ./public_html/                         # what we deploy
-          remote_path: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}  # /home/quscitech/public_html
+          local_path:  ./public_html/
+          remote_path: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}   # /home/quscitech/public_html
           sftp_only:   true
           args: -o StrictHostKeyChecking=no
 
-      - name: 🌐 Verify file reachable (curl smoke test with retry)
+      # NEW: Immediately list the target locations over SSH to see what's actually there
+      - name: 🧾 Verify files on server (ls)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SFTP_USER_PUBLIC }}
+          password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}
+          script: |
+            set -e
+            echo "== pwd and whoami =="
+            pwd; whoami
+            echo "== List docroot =="
+            ls -al /home/quscitech/public_html | sed -n '1,120p'
+            echo "== List root smoke =="
+            ls -al /home/quscitech/public_html/hello-ci.html || true
+            echo "== List instructors dir =="
+            ls -al /home/quscitech/public_html/instructors || true
+            echo "== List QST-INST-2025 =="
+            ls -al /home/quscitech/public_html/instructors/QST-INST-2025 || true
+            echo "== List resources =="
+            ls -al /home/quscitech/public_html/instructors/QST-INST-2025/resources || true
+            echo "== Stat resources smoke =="
+            stat /home/quscitech/public_html/instructors/QST-INST-2025/resources/hello-ci.html || true
+
+      - name: 🌐 Curl checks (root then instructors) with retry
         env:
-          VPS_IP: ${{ secrets.VPS_IP_PUBLIC }}   # A record IP for quscitech.com
+          VPS_IP: ${{ secrets.VPS_IP_PUBLIC }}   # 37.148.203.89
         run: |
           set -e
-          URL="https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
-          echo "Checking $URL"
-          for i in {1..8}; do
-            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
-              echo "✅ Smoke test passed"; exit 0
-            fi
-            echo "⏳ Waiting and retrying ($i/8)..."; sleep 5
+          for path in "${{ env.SMOKE_PATH1 }}" "${{ env.SMOKE_PATH2 }}"; do
+            URL="https://${{ env.WEB_HOSTNAME }}/${path}"
+            echo "Checking $URL"
+            ok=0
+            for i in {1..8}; do
+              if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
+                echo "✅ $path reachable"
+                ok=1; break
+              fi
+              echo "⏳ retry ($i/8)…"; sleep 5
+            done
+            [ $ok -eq 1 ] || { echo "❌ $path not reachable"; exit 1; }
           done
-          echo "❌ Smoke test failed: file not reachable" >&2; exit 1
 

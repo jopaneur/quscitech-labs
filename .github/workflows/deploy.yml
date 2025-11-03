@@ -1,4 +1,4 @@
-name: Deploy to QuSciTech (SFTP) + Smoke Test
+name: Deploy to QuSciTech (SFTP) + Smoke Test (PUBLIC)
 
 on:
   push:
@@ -12,15 +12,53 @@ on:
 
 env:
   WEB_HOSTNAME: quscitech.com
+  # This is the URL you want to verify after deploy:
   SMOKE_PATH: instructors/QST-INST-2025/resources/hello-ci.html
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: 🧰 Checkout
+        uses: actions/checkout@v4
 
-      # (Optional) exporters + sync steps stay as you have them…
+      # ── (optional) run exporters and sync into public_html ─────────────────────
+      # - name: Set up Python 3.13
+      #   uses: actions/setup-python@v5
+      #   with: { python-version: "3.13" }
+      # - name: Install deps for exporters
+      #   run: |
+      #     python -m pip install --upgrade pip
+      #     python -m pip install matplotlib numpy
+      # - name: Run exporters (Beginner labs)
+      #   run: bash tools/export_all_beginners.sh
+      # - name: Sync exported assets into web tree
+      #   run: bash tools/sync_public_assets.sh
+      # - name: Verify structure (optional)
+      #   run: python tools/verify_lab_structure.py --all
+      # ──────────────────────────────────────────────────────────────────────────
+
+      - name: 📝 Ensure smoke-test file exists (PUBLIC)
+        run: |
+          set -e
+          mkdir -p public_html/instructors/QST-INST-2025/resources
+          [ -f public_html/instructors/QST-INST-2025/resources/hello-ci.html ] || cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
+          <!doctype html><meta charset="utf-8">
+          <title>QuSciTech CI Smoke Test</title>
+          <h1>✅ CI/CD is working</h1>
+          <p>Built at: $(date -u)</p>
+          HTML
+
+      - name: 🔎 Probe SFTP port 22 (PUBLIC host)
+        run: |
+          set -e
+          HOST="${{ secrets.SFTP_HOST_PUBLIC }}"
+          echo "Probing $HOST:22 ..."
+          if timeout 5 bash -lc "cat < /dev/null > /dev/tcp/$HOST/22"; then
+            echo "✅ Port 22 reachable"
+          else
+            echo "❌ Port 22 NOT reachable"; exit 1
+          fi
 
       - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
@@ -28,14 +66,14 @@ jobs:
           server:      ${{ secrets.SFTP_HOST_PUBLIC }}
           username:    ${{ secrets.SFTP_USER_PUBLIC }}
           password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}
-          local_path:  ./public_html/
-          remote_path: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}   # <- /home/quscitech/public_html
+          local_path:  ./public_html/                         # what we deploy
+          remote_path: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}  # /home/quscitech/public_html
           sftp_only:   true
           args: -o StrictHostKeyChecking=no
 
       - name: 🌐 Verify file reachable (curl smoke test with retry)
         env:
-          VPS_IP: ${{ secrets.VPS_IP_PUBLIC }}                 # <- use the PUBLIC IP secret
+          VPS_IP: ${{ secrets.VPS_IP_PUBLIC }}   # A record IP for quscitech.com
         run: |
           set -e
           URL="https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"

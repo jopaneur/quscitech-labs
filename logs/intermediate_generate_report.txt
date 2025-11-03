@@ -1,0 +1,51 @@
+============================================================
+QuSciTech Labs — Intermediate README + Smoke Artifact Pass
+UTC: 2025-11-03T18:23:00Z
+Repo: /g/My Drive/GitHub/quscitech-labs
+Target: public/labs/Intermediate_Labs
+============================================================
+
+→ qais-quantum-kernel-svm-vs-logregression-lab
+   - exists:  assets/data/README.md
+   - exists:  assets/images/README.md
+   - wrote:   assets/data/smoke_qais-quantum-kernel-svm-vs-logregression-lab.csv
+   - wrote:   assets/images/smoke_qais-quantum-kernel-svm-vs-logregression-lab.png
+   - wrote:   html/smoke_qais-quantum-kernel-svm-vs-logregression-lab.html
+
+→ qais-zz-expectation-scan-lab
+   - exists:  assets/data/README.md
+   - exists:  assets/images/README.md
+   - wrote:   assets/data/smoke_qais-zz-expectation-scan-lab.csv
+   - wrote:   assets/images/smoke_qais-zz-expectation-scan-lab.png
+   - wrote:   html/smoke_qais-zz-expectation-scan-lab.html
+
+→ qais-BB84-QKD-lab
+   - exists:  assets/data/README.md
+   - exists:  assets/images/README.md
+   - wrote:   assets/data/smoke_qais-BB84-QKD-lab.csv
+   - wrote:   assets/images/smoke_qais-BB84-QKD-lab.png
+   - wrote:   html/smoke_qais-BB84-QKD-lab.html
+
+→ qais-fidelity-trace-distance-lab
+   - exists:  assets/data/README.md
+   - exists:  assets/images/README.md
+   - wrote:   assets/data/smoke_qais-fidelity-trace-distance-lab.csv
+   - wrote:   assets/images/smoke_qais-fidelity-trace-distance-lab.png
+   - wrote:   html/smoke_qais-fidelity-trace-distance-lab.html
+
+→ qais-entanglement-tamper-check-lab
+   - exists:  assets/data/README.md
+   - exists:  assets/images/README.md
+   - wrote:   assets/data/smoke_qais-entanglement-tamper-check-lab.csv
+   - wrote:   assets/images/smoke_qais-entanglement-tamper-check-lab.png
+   - wrote:   html/smoke_qais-entanglement-tamper-check-lab.html
+
+→ qais-VQE-Toy-Minimization-lab
+   - exists:  assets/data/README.md
+   - exists:  assets/images/README.md
+   - wrote:   assets/data/smoke_qais-VQE-Toy-Minimization-lab.csv
+   - wrote:   assets/images/smoke_qais-VQE-Toy-Minimization-lab.png
+   - wrote:   html/smoke_qais-VQE-Toy-Minimization-lab.html
+
+✓ Completed README + smoke generation for Intermediate labs.
+============================================================

@@ -1,19 +1,35 @@
 name: Export Beginner Artifacts
+
 on:
   push:
     paths:
       - "public/labs/Beginner_Labs/**"
       - "tools/**"
+      - ".github/workflows/export-beginners.yml"
   workflow_dispatch:
 
 jobs:
   export-and-verify:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: pip install matplotlib numpy
-      - run: bash tools/export_all_beginners.sh
-      - run: python tools/verify_lab_structure.py --all
+
+      - name: Install deps for exporters
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install matplotlib numpy
+
+      - name: Run exporters
+        shell: bash
+        run: bash tools/export_all_beginners.sh
+
+      - name: Verify structure
+        run: python tools/verify_lab_structure.py --all
+

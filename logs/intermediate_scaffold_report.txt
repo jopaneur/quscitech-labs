@@ -1,0 +1,74 @@
+============================================================
+QuSciTech Labs — Intermediate Scaffold (Option A)
+UTC: 2025-11-03T17:55:31Z
+Repo root: /g/My Drive/GitHub/quscitech-labs
+Target root: public/labs/Intermediate_Labs
+============================================================
+
+→ Initializing Intermediate labs scaffold (Option A)…
+   • qais-quantum-kernel-svm-vs-logregression-lab
+     - unchanged (already standardized)
+   • qais-zz-expectation-scan-lab
+     - unchanged (already standardized)
+   • qais-BB84-QKD-lab
+     - unchanged (already standardized)
+   • qais-fidelity-trace-distance-lab
+     - unchanged (already standardized)
+   • qais-entanglement-tamper-check-lab
+     - unchanged (already standardized)
+   • qais-VQE-Toy-Minimization-lab
+     - unchanged (already standardized)
+
+✓ Intermediate scaffold complete.
+
+------------------------------------------------------------
+Summary:
+  Created/updated: 0
+  Skipped (already OK): 6
+  ▶ Skipped labs:
+    - qais-quantum-kernel-svm-vs-logregression-lab
+    - qais-zz-expectation-scan-lab
+    - qais-BB84-QKD-lab
+    - qais-fidelity-trace-distance-lab
+    - qais-entanglement-tamper-check-lab
+    - qais-VQE-Toy-Minimization-lab
+------------------------------------------------------------
+Post-run tree (Intermediate_Labs only, depth 3 for brevity):
+public/labs/Intermediate_Labs
+public/labs/Intermediate_Labs/qais-BB84-QKD-lab
+public/labs/Intermediate_Labs/qais-BB84-QKD-lab/resources
+public/labs/Intermediate_Labs/qais-BB84-QKD-lab/resources/assets
+public/labs/Intermediate_Labs/qais-BB84-QKD-lab/resources/html
+public/labs/Intermediate_Labs/qais-BB84-QKD-lab/resources/notebooks
+public/labs/Intermediate_Labs/qais-BB84-QKD-lab/resources/tests
+public/labs/Intermediate_Labs/qais-VQE-Toy-Minimization-lab
+public/labs/Intermediate_Labs/qais-VQE-Toy-Minimization-lab/resources
+public/labs/Intermediate_Labs/qais-VQE-Toy-Minimization-lab/resources/assets
+public/labs/Intermediate_Labs/qais-VQE-Toy-Minimization-lab/resources/html
+public/labs/Intermediate_Labs/qais-VQE-Toy-Minimization-lab/resources/notebooks
+public/labs/Intermediate_Labs/qais-VQE-Toy-Minimization-lab/resources/tests
+public/labs/Intermediate_Labs/qais-entanglement-tamper-check-lab
+public/labs/Intermediate_Labs/qais-entanglement-tamper-check-lab/resources
+public/labs/Intermediate_Labs/qais-entanglement-tamper-check-lab/resources/assets
+public/labs/Intermediate_Labs/qais-entanglement-tamper-check-lab/resources/html
+public/labs/Intermediate_Labs/qais-entanglement-tamper-check-lab/resources/notebooks
+public/labs/Intermediate_Labs/qais-entanglement-tamper-check-lab/resources/tests
+public/labs/Intermediate_Labs/qais-fidelity-trace-distance-lab
+public/labs/Intermediate_Labs/qais-fidelity-trace-distance-lab/resources
+public/labs/Intermediate_Labs/qais-fidelity-trace-distance-lab/resources/assets
+public/labs/Intermediate_Labs/qais-fidelity-trace-distance-lab/resources/html
+public/labs/Intermediate_Labs/qais-fidelity-trace-distance-lab/resources/notebooks
+public/labs/Intermediate_Labs/qais-fidelity-trace-distance-lab/resources/tests
+public/labs/Intermediate_Labs/qais-quantum-kernel-svm-vs-logregression-lab
+public/labs/Intermediate_Labs/qais-quantum-kernel-svm-vs-logregression-lab/resources
+public/labs/Intermediate_Labs/qais-quantum-kernel-svm-vs-logregression-lab/resources/assets
+public/labs/Intermediate_Labs/qais-quantum-kernel-svm-vs-logregression-lab/resources/html
+public/labs/Intermediate_Labs/qais-quantum-kernel-svm-vs-logregression-lab/resources/notebooks
+public/labs/Intermediate_Labs/qais-quantum-kernel-svm-vs-logregression-lab/resources/tests
+public/labs/Intermediate_Labs/qais-zz-expectation-scan-lab
+public/labs/Intermediate_Labs/qais-zz-expectation-scan-lab/resources
+public/labs/Intermediate_Labs/qais-zz-expectation-scan-lab/resources/assets
+public/labs/Intermediate_Labs/qais-zz-expectation-scan-lab/resources/html
+public/labs/Intermediate_Labs/qais-zz-expectation-scan-lab/resources/notebooks
+public/labs/Intermediate_Labs/qais-zz-expectation-scan-lab/resources/tests
+============================================================

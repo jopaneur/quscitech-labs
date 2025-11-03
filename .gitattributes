@@ -13,3 +13,6 @@
 *.7z binary
 *.tar binary
 *.gz binary
+*.sh text eol=lf
+*.txt text eol=lf
+*.md  text eol=lf

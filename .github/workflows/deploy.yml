@@ -1,15 +1,12 @@
 name: Deploy to QuSciTech (SFTP) + Smoke Test
 
-# PUBLIC deploy (ships /public only)
-
 on:
   push:
     branches: [ main ]
     paths:
-      - 'public/**'
+      - 'public_html/**'
+      - 'tools/**'
       - '.github/workflows/deploy.yml'
-  schedule:
-    - cron: '0 9 * * *'        # Daily at 09:00 UTC
   workflow_dispatch: {}
 
 env:
@@ -24,20 +21,29 @@ jobs:
       - name: 🧰 Checkout
         uses: actions/checkout@v4
 
-      - name: 📝 Ensure smoke-test file exists
+      # If you generate/sync lab assets into public_html/, keep those steps here
+      # - name: Build/Export Public Assets
+      #   run: |
+      #     bash tools/export_all_beginners.sh
+      #     bash tools/sync_public_assets.sh
+
+      - name: 📝 Ensure smoke-test file exists (PUBLIC)
         run: |
-          mkdir -p public
-          [ -f public/hello-ci.html ] || cat > public/hello-ci.html <<'HTML'
+          set -e
+          mkdir -p public_html/instructors/QST-INST-2025/resources
+          [ -f public_html/instructors/QST-INST-2025/resources/hello-ci.html ] || cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
           <!doctype html><meta charset="utf-8">
           <title>QuSciTech CI Smoke Test</title>
           <h1>✅ CI/CD is working</h1>
           <p>Built at: $(date -u)</p>
           HTML
+          echo "---- DIAG: list under resources ----"
+          ls -lah public_html/instructors/QST-INST-2025/resources || true
 
       - name: 🔎 Probe SFTP port 22
         run: |
           set -e
-          HOST="${{ secrets.SFTP_HOST }}"
+          HOST="${{ secrets.SFTP_HOST_PUBLIC }}"
           echo "Probing $HOST:22 ..."
           if timeout 5 bash -lc "cat < /dev/null > /dev/tcp/$HOST/22"; then
             echo "✅ Port 22 reachable"
@@ -45,20 +51,82 @@ jobs:
             echo "❌ Port 22 NOT reachable"; exit 1
           fi
 
-      - name: 📤 Upload via SFTP
+      # ---------- ONE-TIME SERVER CLEANUP (SSH) ----------
+      # Runs only on manual dispatch for safety. Remove after a clean deploy.
+      - name: 🧹 One-time server cleanup (SSH)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTP_HOST_PUBLIC }}          # qram.quscitech.com
+          username: ${{ secrets.SFTP_USER_PUBLIC }}      # quscitech
+          password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}  # same creds you use for SFTP
+          port: 22
+          script: |
+            set -euo pipefail
+
+            PUBLIC_ROOT="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
+            PRIVATE_ROOT="/home/quscitech/public_html/private/instructors/QST-INST-2025/resources"
+
+            echo "== BEFORE CLEANUP (depth 2) =="
+            find "$PUBLIC_ROOT"  -maxdepth 2 -type d | sort || true
+            echo "---"
+            find "$PRIVATE_ROOT" -maxdepth 2 -type d | sort || true
+            echo "================================"
+
+            # A) Remove stray nested 'public' folder
+            if [ -d "$PUBLIC_ROOT/public" ]; then
+              echo "Removing: $PUBLIC_ROOT/public"
+              rm -rf "$PUBLIC_ROOT/public"
+            fi
+
+            # B) Remove nested labs directory under private path
+            if [ -d "$PRIVATE_ROOT/labs/labs" ]; then
+              echo "Removing: $PRIVATE_ROOT/labs/labs"
+              rm -rf "$PRIVATE_ROOT/labs/labs"
+            fi
+
+            # C) Remove old Advanced lab misspellings (server leftovers)
+            for bad in \
+              "$PUBLIC_ROOT/labs/qais-cshs-correlation-sweep-lab" \
+              "$PUBLIC_ROOT/labs/qais-density-matrix-encoding-metricies-lab" \
+              "$PRIVATE_ROOT/labs/qais-cshs-correlation-sweep-lab" \
+              "$PRIVATE_ROOT/labs/qais-density-matrix-encoding-metricies-lab"
+            do
+              if [ -d "$bad" ]; then
+                echo "Removing stale folder: $bad"
+                rm -rf "$bad"
+              fi
+            done
+
+            # D) Ensure expected directories exist
+            mkdir -p "$PUBLIC_ROOT/labs"  "$PUBLIC_ROOT/assets"  "$PUBLIC_ROOT/html"
+            mkdir -p "$PRIVATE_ROOT/labs" "$PRIVATE_ROOT/assets" "$PRIVATE_ROOT/html"
+
+            # E) Friendly perms (optional)
+            find "$PUBLIC_ROOT"  -type d -exec chmod 755 {} \; || true
+            find "$PUBLIC_ROOT"  -type f -exec chmod 644 {} \; || true
+
+            echo "== AFTER CLEANUP (depth 2) =="
+            find "$PUBLIC_ROOT"  -maxdepth 2 -type d | sort
+            echo "---"
+            find "$PRIVATE_ROOT" -maxdepth 2 -type d | sort
+            echo "================================"
+
+      - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server:      ${{ secrets.SFTP_HOST }}
-          username:    ${{ secrets.SFTP_USER }}
-          password:    ${{ secrets.SFTP_PASSWORD }}
-          local_path:  ./public/
-          remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
+          server:      ${{ secrets.SFTP_HOST_PUBLIC }}
+          username:    ${{ secrets.SFTP_USER_PUBLIC }}
+          password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}
+          # Copy the CONTENTS of public_html (note the /*) into the docroot on the server
+          local_path:  "public_html/*"
+          remote_path: "/home/quscitech/public_html"
           sftp_only:   true
           args: -o StrictHostKeyChecking=no
 
       - name: 🌐 Verify file reachable (curl smoke test with retry)
         env:
-          VPS_IP: ${{ secrets.VPS_IP }}
+          VPS_IP: ${{ secrets.VPS_IP_PUBLIC }}
         run: |
           set -e
           URL="https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
@@ -71,7 +139,7 @@ jobs:
           done
           echo "❌ Smoke test failed: file not reachable" >&2; exit 1
 
-      # ---------- Email notice (optional; runs only if all SMTP secrets are set) ----------
+      # ---------- Optional email notice ----------
       - name: 🔐 Decide if SMTP step should run
         env:
           SMTP_HOST:     ${{ secrets.SMTP_HOST }}
@@ -102,9 +170,9 @@ jobs:
           from:           ${{ secrets.MAIL_FROM }}
           to:             ${{ secrets.MAIL_TO }}
           subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
-          secure: ${{ env.SMTP_PORT == '465' }}   # SSL for 465; STARTTLS auto for 587
+          secure: ${{ env.SMTP_PORT == '465' }}  # Port 587 uses STARTTLS (secure=false)
           body: |
-            ✅ Deployment completed to ${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_REMOTE_DIR }}
+            ✅ Deployment completed to ${{ secrets.SFTP_HOST_PUBLIC }}:/home/quscitech/public_html
             🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
             Repo: ${{ github.repository }}
             Commit: ${{ github.sha }}

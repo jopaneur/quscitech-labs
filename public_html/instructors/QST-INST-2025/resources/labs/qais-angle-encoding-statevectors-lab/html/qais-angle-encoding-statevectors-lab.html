@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>QAIS · Angle Encoding & Statevectors — Preview</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{ --bg:#0b0f14; --ink:#e6eef8; --card:#101826; --amber:#ffa149; }
+    body{ margin:0; font-family:Arial,Helvetica,sans-serif; background:var(--bg); color:var(--ink) }
+    header, footer{ padding:14px 18px; background:#0e1c2b }
+    main{ max-width:980px; margin:24px auto; padding:0 18px 36px }
+    .card{ background:var(--card); border:1px solid rgba(255,255,255,.08);
+           border-radius:10px; padding:16px; margin:16px 0 }
+    h1{ color:var(--amber); font-size:1.6rem; margin:0 }
+    h2{ margin:8px 0 12px; font-size:1.15rem; color:#d7e6ff }
+    .meta{ font-size:.9rem; opacity:.85 }
+    table{ width:100%; border-collapse:collapse; font-size:.95rem }
+    th,td{ padding:6px 8px; border-bottom:1px solid rgba(255,255,255,.08); text-align:right }
+    th:first-child, td:first-child{ text-align:left }
+    .note{ font-size:.9rem; opacity:.9 }
+    a{ color:var(--amber); text-decoration:none } a:hover{text-decoration:underline}
+    canvas{ width:100%; max-width:720px; height:420px }
+  </style>
+
+  <!-- Chart.js (CDN) for a lightweight, zero-build plot -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>Angle Encoding & Statevectors — Public Preview</h1>
+    <div class="meta">Lab: <strong>qais-angle-encoding-statevectors-lab</strong></div>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>Overview</h2>
+      <p>
+        This page loads <code>angles_demo.csv</code> from the lab’s assets and visualizes
+        <em>cos(θ)</em> and <em>sin(θ)</em> versus the encoded angle (radians). Use this page
+        as a quick **deployment smoke test** and as an explainer for learners.
+      </p>
+      <p class="note">
+        CSV path (relative): <code>../assets/data/angles_demo.csv</code>
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Plot</h2>
+      <canvas id="angleChart" aria-label="cos and sin vs angle"></canvas>
+    </div>
+    <p class="note">
+      If your browser blocks scripts, a static preview is shown below.
+    </p>
+    <noscript>
+      <img src="../assets/images/angles_demo.png" alt="Angle encoding plot (static)">
+    </noscript>
+    <div id="imgFallback" hidden>
+      <img src="../assets/images/angles_demo.png" alt="Angle encoding plot (static)">
+    </div>
+
+    <div class="card">
+      <h2>Data Preview</h2>
+      <div id="tableMount">Loading…</div>
+    </div>
+
+    <div class="card">
+      <h2>What’s being encoded?</h2>
+      <p>
+        A single-qubit angle encoding maps a classical scalar <code>θ</code> to
+        <code>|ψ⟩ = cos(θ/2)|0⟩ + sin(θ/2)|1⟩</code>. The chart below shows the classical
+        <code>cos(θ)</code>/<code>sin(θ)</code> for intuition; notebooks compute the actual
+        statevectors and measurements.
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    © 2025 QuSciTech — QAIS Labs. ·
+    <a href="../tests/hello-ci.html">CI Smoke Page</a>
+  </footer>
+
+  <script>
+    // Utils
+    async function loadCSV(path){
+      const txt = await fetch(path, {cache:"no-store"}).then(r=>r.text());
+      const rows = txt.split(/\r?\n/).filter(r=>r.trim() && !r.trim().startsWith("#"));
+      const header = rows.shift().split(",").map(s=>s.trim());
+      const data = rows.map(r => r.split(",").map(s=>s.trim()));
+      return { header, rows: data };
+    }
+
+    function renderTable(mount, header, rows){
+      const tbl = document.createElement("table");
+      const thead = document.createElement("thead");
+      const trh = document.createElement("tr");
+      header.forEach(h=>{ const th=document.createElement("th"); th.textContent=h; trh.appendChild(th); });
+      thead.appendChild(trh);
+      tbl.appendChild(thead);
+
+      const tb = document.createElement("tbody");
+      rows.forEach(r=>{
+        const tr=document.createElement("tr");
+        r.forEach((c,i)=>{ const td=document.createElement("td"); td.textContent=c; tr.appendChild(td); });
+        tb.appendChild(tr);
+      });
+      tbl.appendChild(tb);
+      mount.innerHTML = "";
+      mount.appendChild(tbl);
+    }
+
+    async function main(){
+      const csvPath = "../assets/data/angles_demo.csv";
+      const { header, rows } = await loadCSV(csvPath);
+
+      // columns: angle_rad, cos(angle), sin(angle)
+      const idxAngle = header.indexOf("angle_rad");
+      const idxCos   = header.findIndex(h => h.toLowerCase().startsWith("cos"));
+      const idxSin   = header.findIndex(h => h.toLowerCase().startsWith("sin"));
+
+      const angles = rows.map(r => parseFloat(r[idxAngle]));
+      const cosv   = rows.map(r => parseFloat(r[idxCos]));
+      const sinv   = rows.map(r => parseFloat(r[idxSin]));
+
+      // Chart
+      const ctx = document.getElementById("angleChart");
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: angles,
+          datasets: [
+            { label: "cos(θ)", data: cosv, tension: 0.2 },
+            { label: "sin(θ)", data: sinv, tension: 0.2 }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: "#e6eef8" } },
+            title: { display: true, text: "Angle Encoding — Classical Projections", color: "#e6eef8" }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: "θ (radians)", color: "#e6eef8" },
+              ticks: { color: "#cfe2ff" },
+              grid: { color: "rgba(255,255,255,.12)" }
+            },
+            y: {
+              min: -1, max: 1,
+              title: { display: true, text: "value", color: "#e6eef8" },
+              ticks: { color: "#cfe2ff" },
+              grid: { color: "rgba(255,255,255,.12)" }
+            }
+          }
+        }
+      });
+
+      // Data table
+      renderTable(document.getElementById("tableMount"), header, rows);
+    }
+
+    // If the canvas didn't initialize (e.g., blocked JS), reveal PNG fallback.
+    document.getElementById("angleChart")?.addEventListener("error", ()=> {
+      document.getElementById("imgFallback").hidden = false;
+    });
+
+    // Start after Chart.js loads
+    window.addEventListener("DOMContentLoaded", main);
+  </script>
+</body>
+</html>
+

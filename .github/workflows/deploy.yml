@@ -60,10 +60,15 @@ jobs:
         with:
           host: ${{ secrets.SFTP_HOST_PUBLIC }}          # qram.quscitech.com
           username: ${{ secrets.SFTP_USER_PUBLIC }}      # quscitech
-          password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}  # same creds you use for SFTP
+          key: ${{ secrets.SSH_PRIVATE_KEY_PUBLIC }}     # RSA private key from cPanel
+          passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE_PUBLIC }}
           port: 22
           script: |
             set -euo pipefail
+            echo "Connected successfully via RSA key."
+            hostname
+            whoami
+            echo "✅ SSH key authentication working. Proceed with cleanup..."
 
             PUBLIC_ROOT="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
             PRIVATE_ROOT="/home/quscitech/public_html/private/instructors/QST-INST-2025/resources"

@@ -51,25 +51,19 @@ jobs:
             echo "❌ Port 22 NOT reachable"; exit 1
           fi
 
-      # ---------- ONE-TIME SERVER CLEANUP (SSH) ----------
+      # ---------- ONE-TIME SERVER CLEANUP (SSH as root) ----------
       # Runs only on manual dispatch for safety. Remove after a clean deploy.
-      - name: 🧹 One-time server cleanup (SSH)
+      - name: 🧹 One-time server cleanup (SSH as root)
         if: ${{ github.event_name == 'workflow_dispatch' }}
         continue-on-error: true
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SFTP_HOST_PUBLIC }}          # qram.quscitech.com
-          username: ${{ secrets.SFTP_USER_PUBLIC }}      # quscitech
-          key: ${{ secrets.SSH_PRIVATE_KEY_PUBLIC }}     # RSA private key from cPanel
-          passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE_PUBLIC }}
+          host: ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}      # root
+          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}  # stored as secret
           port: 22
           script: |
             set -euo pipefail
-            echo "Connected successfully via RSA key."
-            hostname
-            whoami
-            echo "✅ SSH key authentication working. Proceed with cleanup..."
-
             PUBLIC_ROOT="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
             PRIVATE_ROOT="/home/quscitech/public_html/private/instructors/QST-INST-2025/resources"
 
@@ -98,24 +92,21 @@ jobs:
               "$PRIVATE_ROOT/labs/qais-cshs-correlation-sweep-lab" \
               "$PRIVATE_ROOT/labs/qais-density-matrix-encoding-metricies-lab"
             do
-              if [ -d "$bad" ]; then
-                echo "Removing stale folder: $bad"
-                rm -rf "$bad"
-              fi
+              [ -d "$bad" ] && { echo "Removing stale folder: $bad"; rm -rf "$bad"; } || true
             done
 
             # D) Ensure expected directories exist
             mkdir -p "$PUBLIC_ROOT/labs"  "$PUBLIC_ROOT/assets"  "$PUBLIC_ROOT/html"
             mkdir -p "$PRIVATE_ROOT/labs" "$PRIVATE_ROOT/assets" "$PRIVATE_ROOT/html"
 
-            # E) Friendly perms (optional)
+            # E) Friendly perms (optional, for public tree)
             find "$PUBLIC_ROOT"  -type d -exec chmod 755 {} \; || true
             find "$PUBLIC_ROOT"  -type f -exec chmod 644 {} \; || true
 
             echo "== AFTER CLEANUP (depth 2) =="
-            find "$PUBLIC_ROOT"  -maxdepth 2 -type d | sort
+            find "$PUBLIC_ROOT"  -maxdepth 2 -type d | sort || true
             echo "---"
-            find "$PRIVATE_ROOT" -maxdepth 2 -type d | sort
+            find "$PRIVATE_ROOT" -maxdepth 2 -type d | sort || true
             echo "================================"
 
       - name: 📤 Upload via SFTP (PUBLIC)
@@ -124,9 +115,8 @@ jobs:
           server:      ${{ secrets.SFTP_HOST_PUBLIC }}
           username:    ${{ secrets.SFTP_USER_PUBLIC }}
           password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}
-          # Copy the CONTENTS of public_html (note the /*) into the docroot on the server
           local_path:  "public_html/*"
-          remote_path: "/home/quscitech/public_html"
+          remote_path: "${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}"  # /home/quscitech/public_html
           sftp_only:   true
           args: -o StrictHostKeyChecking=no
 
@@ -176,9 +166,9 @@ jobs:
           from:           ${{ secrets.MAIL_FROM }}
           to:             ${{ secrets.MAIL_TO }}
           subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
-          secure: ${{ env.SMTP_PORT == '465' }}  # Port 587 uses STARTTLS (secure=false)
+          secure: ${{ env.SMTP_PORT == '465' }}  # Port 587 uses STARTTLS
           body: |
-            ✅ Deployment completed to ${{ secrets.SFTP_HOST_PUBLIC }}:/home/quscitech/public_html
+            ✅ Deployment completed to ${{ secrets.SFTP_HOST_PUBLIC }}:${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}
             🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
             Repo: ${{ github.repository }}
             Commit: ${{ github.sha }}

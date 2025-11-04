@@ -113,3 +113,9 @@ QAIS_*_TA_Checklist.docx
 # Ignore all hidden operational docs unless explicitly needed
 **/ops/**/*
 **/admin/**/*
+
+# Allow directory placeholders everywhere
+!.gitkeep
+# …and explicitly allow data placeholders under labs
+!public/labs/**/resources/assets/data/.gitkeep
+

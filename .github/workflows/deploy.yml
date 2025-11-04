@@ -125,14 +125,14 @@ jobs:
         if: env.HAS_SMTP == 'true'
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: ${{ secrets.SMTP_HOST }}
+          server_address: ${{ secrets.SMTP_HOST }}      # qram.quscitech.com
           server_port:    ${{ env.SMTP_PORT }}
           username:       ${{ secrets.SMTP_USERNAME }}
           password:       ${{ secrets.SMTP_PASSWORD }}
           from:           ${{ secrets.MAIL_FROM }}
           to:             ${{ secrets.MAIL_TO }}
           subject: "✅ Public Deploy Completed — ${{ github.repository }} @ ${{ github.sha }}"
-          secure: ${{ env.SMTP_PORT == '465' }}
+          secure: ${{ env.SMTP_PORT == '465' }}  # STARTTLS if 587
           body: |
             ✅ Public deployment completed successfully
             🔗 Host: ${{ secrets.SFTP_HOST_PUBLIC }}
@@ -141,4 +141,5 @@ jobs:
             🧠 Repo: ${{ github.repository }}
             🧩 Commit: ${{ github.sha }}
             👤 By: ${{ github.actor }}
+
 

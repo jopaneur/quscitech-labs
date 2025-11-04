@@ -52,21 +52,61 @@ jobs:
             echo "::warning ::❌ Port 22 NOT reachable (will attempt upload anyway)"
           fi
 
-      # ---------- Prep target and ownership (root) ----------
-      - name: 🧱 Prepare public target (mkdir + chown for qadmin)
+      # ---------- One-time server cleanup (manual only; safe to keep) ----------
+      - name: 🧹 One-time server cleanup (SSH as root)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        continue-on-error: true
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SFTP_HOST_PUBLIC }}                 # qram.quscitech.com
-          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}         # root
+          host: ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}      # root
           password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
           port: 22
           script: |
             set -euo pipefail
             PUBLIC_ROOT="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
-            mkdir -p "$PUBLIC_ROOT/labs" "$PUBLIC_ROOT/assets" "$PUBLIC_ROOT/html"
-            chown -R qadmin:qadmin "$PUBLIC_ROOT"
-            chmod -R 755 "$PUBLIC_ROOT"
-            echo "✅ Prepared $PUBLIC_ROOT (owned by qadmin)."
+            PRIVATE_ROOT="/home/quscitech/public_html/private/instructors/QST-INST-2025/resources"
+
+            echo "== BEFORE CLEANUP (depth 2) =="
+            find "$PUBLIC_ROOT"  -maxdepth 2 -type d | sort || true
+            echo "---"
+            find "$PRIVATE_ROOT" -maxdepth 2 -type d | sort || true
+            echo "================================"
+
+            # Remove known stray folders if present
+            [ -d "$PUBLIC_ROOT/public" ] && rm -rf "$PUBLIC_ROOT/public" || true
+            [ -d "$PRIVATE_ROOT/labs/labs" ] && rm -rf "$PRIVATE_ROOT/labs/labs" || true
+
+            for bad in \
+              "$PUBLIC_ROOT/labs/qais-cshs-correlation-sweep-lab" \
+              "$PUBLIC_ROOT/labs/qais-density-matrix-encoding-metricies-lab" \
+              "$PRIVATE_ROOT/labs/qais-cshs-correlation-sweep-lab" \
+              "$PRIVATE_ROOT/labs/qais-density-matrix-encoding-metricies-lab"
+            do
+              [ -d "$bad" ] && rm -rf "$bad" || true
+            done
+
+            echo "== AFTER CLEANUP (depth 2) =="
+            find "$PUBLIC_ROOT"  -maxdepth 2 -type d | sort || true
+            echo "---"
+            find "$PRIVATE_ROOT" -maxdepth 2 -type d | sort || true
+            echo "================================"
+
+      # ---------- Prepare public target (mkdir + chown for qadmin) ----------
+      - name: 🧱 Prepare public target (mkdir + chown for qadmin)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}      # root
+          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
+          port: 22
+          script: |
+            set -euo pipefail
+            BASE="/home/quscitech/public_html/instructors/QST-INST-2025"
+            mkdir -p "$BASE/resources" "$BASE/resources/labs" "$BASE/resources/assets" "$BASE/resources/html"
+            chown -R qadmin:qadmin "$BASE"
+            chmod -R 755 "$BASE"
+            echo "✅ Prepared $BASE and granted ownership to qadmin."
 
       - name: 🕵️ List target permissions (post-prep)
         uses: appleboy/ssh-action@v1.0.3
@@ -76,21 +116,23 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
           port: 22
           script: |
-            set -euo pipefail
-            PUBLIC_ROOT="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
-            ls -ld "$PUBLIC_ROOT" || true
-            ls -l  "$PUBLIC_ROOT" || true
+            set -e
+            ls -ld /home/quscitech/public_html/instructors/QST-INST-2025/resources
+            ls -l  /home/quscitech/public_html/instructors/QST-INST-2025/resources | head -n 50
 
-      # ---------- Upload only the prepared subtree ----------
+      # ---------- Upload (allow SSH so action can mkdir/set attrs) ----------
       - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server:      ${{ secrets.SFTP_HOST_PUBLIC }}
           username:    ${{ secrets.SFTP_USER_PUBLIC }}          # qadmin
-          password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}
-          local_path:  "public_html/instructors/QST-INST-2025/resources/*"
-          remote_path: "/home/quscitech/public_html/instructors/QST-INST-2025/resources"
-          sftp_only:   true
+          password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}      # (or use ssh_private_key)
+          port:        22
+          # Use the directory path (not /*) so the action syncs its contents reliably
+          local_path:  public_html/instructors/QST-INST-2025/resources
+          remote_path: /home/quscitech/public_html/instructors/QST-INST-2025/resources
+          sftp_only:   false
+          delete_remote_files: false
           args: -o StrictHostKeyChecking=no
 
       - name: 🌐 Verify file reachable (curl smoke test with retry)

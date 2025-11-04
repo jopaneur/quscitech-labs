@@ -152,16 +152,18 @@ jobs:
       - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server:      ${{ secrets.SFTP_HOST_PUBLIC }}
-          username:    ${{ secrets.SFTP_USER_PUBLIC }}          # qadmin
-          password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}
-          port:        22
-          # Upload the directory (lets the action recurse); remote dirs now exist
-          local_path:  public_html/instructors/QST-INST-2025/resources
-          remote_path: /home/quscitech/public_html/instructors/QST-INST-2025/resources
-          sftp_only:   true
-          delete_remote_files: false
+          server:        ${{ secrets.SFTP_HOST_PUBLIC }}
+          username:      ${{ secrets.SFTP_USER_PUBLIC }}      # qadmin
+          password:      ${{ secrets.SFTP_PASSWORD_PUBLIC }}
+          port:          22
+          # Give the action a directory, not a glob; it will push its contents
+          local_path:    public_html/instructors/QST-INST-2025/resources
+          # *** KEY FIX *** use chroot-relative path (no /home/quscitech) + trailing slash
+          remote_path:   public_html/instructors/QST-INST-2025/resources/
+          sftp_only:     false
           args: -o StrictHostKeyChecking=no
+          delete_remote_files: false
+
 
       - name: 🌐 Verify file reachable (curl smoke test with retry)
         env:
@@ -215,4 +217,5 @@ jobs:
             Repo: ${{ github.repository }}
             Commit: ${{ github.sha }}
             By: ${{ github.actor }}
+
 

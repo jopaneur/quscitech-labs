@@ -21,12 +21,6 @@ jobs:
       - name: 🧰 Checkout
         uses: actions/checkout@v4
 
-      # If you generate/sync lab assets into public_html/, keep those steps here
-      # - name: Build/Export Public Assets
-      #   run: |
-      #     bash tools/export_all_beginners.sh
-      #     bash tools/sync_public_assets.sh
-
       - name: 📝 Ensure smoke-test file exists (PUBLIC)
         run: |
           set -e
@@ -51,8 +45,6 @@ jobs:
             echo "❌ Port 22 NOT reachable"; exit 1
           fi
 
-      # ---------- ONE-TIME SERVER CLEANUP (SSH as root) ----------
-      # Runs only on manual dispatch for safety. Remove after a clean deploy.
       - name: 🧹 One-time server cleanup (SSH as root)
         if: ${{ github.event_name == 'workflow_dispatch' }}
         continue-on-error: true
@@ -73,19 +65,16 @@ jobs:
             find "$PRIVATE_ROOT" -maxdepth 2 -type d | sort || true
             echo "================================"
 
-            # A) Remove stray nested 'public' folder
             if [ -d "$PUBLIC_ROOT/public" ]; then
               echo "Removing: $PUBLIC_ROOT/public"
               rm -rf "$PUBLIC_ROOT/public"
             fi
 
-            # B) Remove nested labs directory under private path
             if [ -d "$PRIVATE_ROOT/labs/labs" ]; then
               echo "Removing: $PRIVATE_ROOT/labs/labs"
               rm -rf "$PRIVATE_ROOT/labs/labs"
             fi
 
-            # C) Remove old Advanced lab misspellings (server leftovers)
             for bad in \
               "$PUBLIC_ROOT/labs/qais-cshs-correlation-sweep-lab" \
               "$PUBLIC_ROOT/labs/qais-density-matrix-encoding-metricies-lab" \
@@ -95,11 +84,9 @@ jobs:
               [ -d "$bad" ] && { echo "Removing stale folder: $bad"; rm -rf "$bad"; } || true
             done
 
-            # D) Ensure expected directories exist
             mkdir -p "$PUBLIC_ROOT/labs"  "$PUBLIC_ROOT/assets"  "$PUBLIC_ROOT/html"
             mkdir -p "$PRIVATE_ROOT/labs" "$PRIVATE_ROOT/assets" "$PRIVATE_ROOT/html"
 
-            # E) Friendly perms (optional, for public tree)
             find "$PUBLIC_ROOT"  -type d -exec chmod 755 {} \; || true
             find "$PUBLIC_ROOT"  -type f -exec chmod 644 {} \; || true
 
@@ -109,7 +96,7 @@ jobs:
             find "$PRIVATE_ROOT" -maxdepth 2 -type d | sort || true
             echo "================================"
 
-      # ---------- Prepare remote target (root): mkdir + chown for qadmin ----------
+      # ---------- Stronger prep: ensure whole chain is owned by qadmin ----------
       - name: 🧱 Prepare public target (mkdir + chown for qadmin)
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -119,11 +106,23 @@ jobs:
           port: 22
           script: |
             set -euo pipefail
-            PUBLIC_ROOT="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
-            mkdir -p "$PUBLIC_ROOT/labs" "$PUBLIC_ROOT/assets" "$PUBLIC_ROOT/html"
-            chown -R qadmin:qadmin "$PUBLIC_ROOT"
-            chmod -R 755 "$PUBLIC_ROOT"
-            echo "✅ Prepared $PUBLIC_ROOT (owned by qadmin)."
+            BASE="/home/quscitech/public_html"
+            INSTR="$BASE/instructors"
+            COURSE="$INSTR/QST-INST-2025"
+            RES="$COURSE/resources"
+
+            mkdir -p "$RES/labs" "$RES/assets" "$RES/html"
+
+            # Own the entire chain so the lftp mirror can traverse & write
+            chown -R qadmin:qadmin "$INSTR"
+            chmod -R 755 "$INSTR"
+
+            echo "== OWNERSHIP CHECK =="
+            ls -ld "$BASE" "$INSTR" "$COURSE" "$RES"
+            echo "-- tree (1 level) --"
+            find "$RES" -maxdepth 1 -type d -printf "%M %u:%g %p\n" | sort
+
+            echo "✅ Prepared $RES (and parents) for qadmin writes."
 
       - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
@@ -151,7 +150,6 @@ jobs:
           done
           echo "❌ Smoke test failed: file not reachable" >&2; exit 1
 
-      # ---------- Optional email notice ----------
       - name: 🔐 Decide if SMTP step should run
         env:
           SMTP_HOST:     ${{ secrets.SMTP_HOST }}
@@ -182,7 +180,7 @@ jobs:
           from:           ${{ secrets.MAIL_FROM }}
           to:             ${{ secrets.MAIL_TO }}
           subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
-          secure: ${{ env.SMTP_PORT == '465' }}  # Port 587 uses STARTTLS
+          secure: ${{ env.SMTP_PORT == '465' }}
           body: |
             ✅ Deployment completed to ${{ secrets.SFTP_HOST_PUBLIC }}:${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}
             🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}

@@ -17,41 +17,48 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: 🧰 Checkout
         uses: actions/checkout@v4
 
-      # Build the smoke marker inside the web tree
-      - name: 📝 Ensure smoke-test file exists (PUBLIC)
+      # Build the exact web tree we want to upload
+      - name: 🧱 Prepare local web tree (flatten labs)
         run: |
-          set -e
+          set -euo pipefail
           WEB_ROOT="public_html/instructors/QST-INST-2025/resources"
+          LABS_SRC="public/labs"
+          LABS_DST="$WEB_ROOT/labs"
+
+          # smoke file
           mkdir -p "$WEB_ROOT"
           [ -f "$WEB_ROOT/hello-ci.html" ] || cat > "$WEB_ROOT/hello-ci.html" <<'HTML'
           <!doctype html><meta charset="utf-8">
           <title>QuSciTech CI Smoke Test</title>
-          <h1>✅ CI/CD is working (PUBLIC)</h1>
+          <h1>✅ CI/CD is working</h1>
           <p>Built at: $(date -u)</p>
           HTML
-          echo "---- DIAG: list under resources ----"
-          ls -lah "$WEB_ROOT" || true
 
-      # Copy ALL repo labs into the web-ready tree (so we deploy complete folders)
-      - name: 🔁 Sync repo labs into web tree
-        run: |
-          set -e
-          SRC="public/labs/"
-          DST="public_html/instructors/QST-INST-2025/resources/labs/"
-          mkdir -p "$DST"
-          rsync -a --delete "$SRC" "$DST"
-          echo "Synced $(find "$DST" -maxdepth 1 -mindepth 1 -type d | wc -l) labs into $DST"
-          # Add/refresh the flat-layout README if you keep it in the repo
-          if [ -f public_html/instructors/QST-INST-2025/resources/labs/README.md ]; then
-            echo "Labs README present."
+          # rebuild flat labs/
+          rm -rf "$LABS_DST"
+          mkdir -p "$LABS_DST"
+
+          # Copy every leaf lab (depth=2) into labs/<leaf>/
+          find "$LABS_SRC" -mindepth 2 -maxdepth 2 -type d -print0 \
+            | while IFS= read -r -d '' d; do
+                leaf="$(basename "$d")"
+                rsync -a "$d/" "$LABS_DST/$leaf/"
+              done
+
+          # If you keep a curated README at this repo path, copy it in
+          if [ -f "$LABS_SRC/README.web.md" ]; then
+            cp -f "$LABS_SRC/README.web.md" "$LABS_DST/README.md"
           fi
 
+          echo "Local web tree ready:"
+          find "$WEB_ROOT" -maxdepth 2 -type d -printf " - %p\n" | sort
+
       - name: 🔎 Probe SFTP port 22 (non-blocking)
+        continue-on-error: true
         run: |
           set -e
           HOST="${{ secrets.SFTP_HOST_PUBLIC }}"
@@ -62,34 +69,10 @@ jobs:
             echo "::warning ::❌ Port 22 NOT reachable (will attempt upload anyway)"
           fi
 
-      # Prepare target and ensure qadmin owns it so SFTP can write
-      - name: 🧱 Prepare public target (mkdir + chown for qadmin)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTP_HOST_PUBLIC }}                 # qram.quscitech.com
-          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}         # root
-          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
-          port: 22
-          script: |
-            set -euo pipefail
-            BASE="/home/quscitech/public_html/instructors/QST-INST-2025"
-            WEB="$BASE/resources"
-
-            # Create expected structure
-            mkdir -p "$WEB/labs" "$WEB/assets" "$WEB/html"
-
-            # One-time flatten if a nested resources/ was created earlier
-            if [ -d "$WEB/resources" ]; then
-              rsync -a "$WEB/resources/" "$WEB/" && rm -rf "$WEB/resources"
-            fi
-
-            chown -R qadmin:qadmin "$WEB"
-            find "$WEB" -type d -exec chmod 755 {} \;
-            find "$WEB" -type f -exec chmod 644 {} \;
-
-            echo "✅ Prepared $WEB (owned by qadmin)."
-
-      - name: 🧾 List target permissions (post-prep)
+      # One-time fix for accidental resources/resources/ nesting
+      - name: 🧹 One-time cleanup (manual runs only)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        continue-on-error: true
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SFTP_HOST_PUBLIC }}
@@ -97,41 +80,73 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
           port: 22
           script: |
-            set -e
-            WEB="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
-            ls -ld "$WEB" || true
-            ls -ld "$WEB/labs" || true
+            set -euo pipefail
+            BASE="/home/quscitech/public_html/instructors/QST-INST-2025"
+            if [ -d "$BASE/resources/resources" ]; then
+              rsync -a "$BASE/resources/resources/" "$BASE/resources/"
+              rm -rf "$BASE/resources/resources"
+              echo "Flattened nested resources/."
+            fi
 
-      # IMPORTANT: upload the CONTENTS of /resources (avoid creating resources/resources)
+      - name: 🧱 Prepare remote target (mkdir + chown qadmin)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}
+          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
+          port: 22
+          script: |
+            set -euo pipefail
+            PUBLIC_ROOT="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
+            mkdir -p "$PUBLIC_ROOT/labs" "$PUBLIC_ROOT/assets" "$PUBLIC_ROOT/html"
+            chown -R qadmin:qadmin "$PUBLIC_ROOT"
+            find "$PUBLIC_ROOT" -type d -exec chmod 755 {} \; || true
+            find "$PUBLIC_ROOT" -type f -exec chmod 644 {} \; || true
+            echo "Remote prepared at $PUBLIC_ROOT"
+
+      - name: 📋 Show remote perms (post-prep)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}
+          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
+          port: 22
+        # not fatal if ls fails
+          script: |
+            set -e
+            TARGET="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
+            ls -ld "$TARGET" || true
+            ls -ld "$TARGET/labs" || true
+
+      # Upload the CONTENTS of resources/ (prevents resources/resources)
       - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server:      ${{ secrets.SFTP_HOST_PUBLIC }}
-          username:    ${{ secrets.SFTP_USER_PUBLIC }}          # qadmin
+          username:    ${{ secrets.SFTP_USER_PUBLIC }}      # qadmin
           password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}
           port:        22
           local_path:  "public_html/instructors/QST-INST-2025/resources/*"
           remote_path: "/home/quscitech/public_html/instructors/QST-INST-2025/resources"
           sftp_only:   false
-          args: -o StrictHostKeyChecking=no
           delete_remote_files: false
+          args: -o StrictHostKeyChecking=no
 
       - name: 🌐 Verify file reachable (curl smoke test with retry)
         env:
-          VPS_IP: ${{ secrets.VPS_IP_PUBLIC }}   # your server IP for --resolve
+          VPS_IP: ${{ secrets.VPS_IP_PUBLIC }}
         run: |
           set -e
           URL="https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
           echo "Checking $URL"
           for i in {1..8}; do
-            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
+            if curl -k -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
               echo "✅ Smoke test passed"; exit 0
             fi
             echo "⏳ Waiting and retrying ($i/8)…"; sleep 5
           done
-          echo "❌ Smoke test failed: file not reachable" >&2; exit 1
+          echo "❌ Smoke test failed" >&2; exit 1
 
-      # ---------- Optional email notice ----------
       - name: 🔐 Decide if SMTP step should run
         env:
           SMTP_HOST:     ${{ secrets.SMTP_HOST }}
@@ -155,21 +170,18 @@ jobs:
         if: env.HAS_SMTP == 'true'
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: ${{ secrets.SMTP_HOST }}             # qram.quscitech.com
-          server_port:    ${{ env.SMTP_PORT }}                 # 587 (STARTTLS) or 465 (SSL)
-          secure:         ${{ env.SMTP_PORT == '465' }}        # true for 465, false for 587 (STARTTLS)
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port:    ${{ env.SMTP_PORT }}
           username:       ${{ secrets.SMTP_USERNAME }}
           password:       ${{ secrets.SMTP_PASSWORD }}
           from:           ${{ secrets.MAIL_FROM }}
           to:             ${{ secrets.MAIL_TO }}
-          subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
-          convert_markdown: true
+          secure:         ${{ env.SMTP_PORT == '465' }}
+          subject: "QuSciTech Public Deploy: ${{ github.repository }} @ ${{ github.sha }}"
           body: |
-            ✅ Public deployment completed.
-            Host: ${{ secrets.SFTP_HOST_PUBLIC }}
-            Target: /home/quscitech/public_html/instructors/QST-INST-2025/resources
-            Smoke: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
-            Repo: ${{ github.repository }}
+            ✅ Public deployment completed to ${{ secrets.SFTP_HOST_PUBLIC }}:/home/quscitech/public_html/instructors/QST-INST-2025/resources
+            🔎 Smoke: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
+            Repo:   ${{ github.repository }}
             Commit: ${{ github.sha }}
-            Actor: ${{ github.actor }}
+            By:     ${{ github.actor }}
 

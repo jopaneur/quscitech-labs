@@ -41,17 +41,18 @@ jobs:
           ls -lah public_html/instructors/QST-INST-2025/resources || true
 
       - name: 🔎 Probe SFTP port 22
+        continue-on-error: true
         run: |
           set -e
           HOST="${{ secrets.SFTP_HOST_PUBLIC }}"
           echo "Probing $HOST:22 ..."
-          if timeout 5 bash -lc "cat < /dev/null > /dev/tcp/$HOST/22"; then
+          if timeout 10 bash -lc "cat < /dev/tcp/$HOST/22"; then
             echo "✅ Port 22 reachable"
           else
-            echo "❌ Port 22 NOT reachable"; exit 1
+            echo "::warning ::❌ Port 22 NOT reachable (will attempt upload anyway)"
           fi
 
-      # ---------- PREP: ensure parent path ownership (SSH as root) ----------
+      # ---------- Prep target and ownership (root) ----------
       - name: 🧱 Prepare public target (mkdir + chown for qadmin)
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -61,34 +62,34 @@ jobs:
           port: 22
           script: |
             set -euo pipefail
-            umask 022
+            PUBLIC_ROOT="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
+            mkdir -p "$PUBLIC_ROOT/labs" "$PUBLIC_ROOT/assets" "$PUBLIC_ROOT/html"
+            chown -R qadmin:qadmin "$PUBLIC_ROOT"
+            chmod -R 755 "$PUBLIC_ROOT"
+            echo "✅ Prepared $PUBLIC_ROOT (owned by qadmin)."
 
-            BASE="/home/quscitech/public_html/instructors/QST-INST-2025"
-            RES="$BASE/resources"
+      - name: 🕵️ List target permissions (post-prep)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}
+          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
+          port: 22
+          script: |
+            set -euo pipefail
+            PUBLIC_ROOT="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
+            ls -ld "$PUBLIC_ROOT" || true
+            ls -l  "$PUBLIC_ROOT" || true
 
-            echo "== BEFORE =="
-            ls -ld /home/quscitech /home/quscitech/public_html || true
-            ls -ld "$BASE" "$RES" 2>/dev/null || true
-
-            echo "== Ensure directory tree =="
-            mkdir -p "$RES"/{labs,assets,html}
-
-            echo "== Apply ownership (qadmin:qadmin) and perms =="
-            chown -R qadmin:qadmin "$BASE"
-            find "$BASE" -type d -exec chmod 755 {} \;
-            find "$BASE" -type f -exec chmod 644 {} \;
-
-            echo "== AFTER =="
-            ls -ld "$BASE" "$RES" "$RES/labs" "$RES/assets" "$RES/html"
-
+      # ---------- Upload only the prepared subtree ----------
       - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server:      ${{ secrets.SFTP_HOST_PUBLIC }}
           username:    ${{ secrets.SFTP_USER_PUBLIC }}          # qadmin
           password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}
-          local_path:  "public_html/*"                          # upload contents of public_html
-          remote_path: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}    # /home/quscitech/public_html
+          local_path:  "public_html/instructors/QST-INST-2025/resources/*"
+          remote_path: "/home/quscitech/public_html/instructors/QST-INST-2025/resources"
           sftp_only:   true
           args: -o StrictHostKeyChecking=no
 
@@ -140,7 +141,7 @@ jobs:
           subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
           secure: ${{ env.SMTP_PORT == '465' }}  # Port 587 uses STARTTLS (secure=false)
           body: |
-            ✅ Deployment completed to ${{ secrets.SFTP_HOST_PUBLIC }}:${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}
+            ✅ Deployment completed to ${{ secrets.SFTP_HOST_PUBLIC }}:/home/quscitech/public_html/instructors/QST-INST-2025/resources
             🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
             Repo: ${{ github.repository }}
             Commit: ${{ github.sha }}

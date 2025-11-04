@@ -21,18 +21,17 @@ jobs:
       - name: 🧰 Checkout
         uses: actions/checkout@v4
 
+      # Ensure smoke-test file exists locally before upload
       - name: 📝 Ensure smoke-test file exists (PUBLIC)
         run: |
           set -e
           mkdir -p public_html/instructors/QST-INST-2025/resources
           [ -f public_html/instructors/QST-INST-2025/resources/hello-ci.html ] || cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
           <!doctype html><meta charset="utf-8">
-          <title>QuSciTech CI Smoke Test</title>
-          <h1>✅ CI/CD is working</h1>
+          <title>QuSciTech CI Smoke Test (Public)</title>
+          <h1>✅ CI/CD Public Deploy Working</h1>
           <p>Built at: $(date -u)</p>
           HTML
-          echo "---- DIAG: list under resources ----"
-          ls -lah public_html/instructors/QST-INST-2025/resources || true
 
       - name: 🔎 Probe SFTP port 22 (non-blocking)
         continue-on-error: true
@@ -43,98 +42,11 @@ jobs:
           if timeout 10 bash -lc "cat < /dev/tcp/$HOST/22"; then
             echo "✅ Port 22 reachable"
           else
-            echo "::warning ::❌ Port 22 NOT reachable (will attempt upload anyway)"
+            echo "::warning::❌ Port 22 NOT reachable (will attempt upload anyway)"
           fi
 
-      # ---------- One-time server cleanup (manual only) ----------
-      - name: 🧹 One-time server cleanup (SSH as root)
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        continue-on-error: true
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTP_HOST_PUBLIC }}
-          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}      # root
-          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
-          port: 22
-          script: |
-            set -euo pipefail
-            PUB="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
-            PRIV="/home/quscitech/public_html/private/instructors/QST-INST-2025/resources"
-
-            echo "== BEFORE CLEANUP (depth 2) =="
-            find "$PUB"  -maxdepth 2 -type d | sort || true
-            echo "---"
-            find "$PRIV" -maxdepth 2 -type d | sort || true
-            echo "================================"
-
-            [ -d "$PUB/public" ]  && rm -rf "$PUB/public"  || true
-            [ -d "$PRIV/labs/labs" ] && rm -rf "$PRIV/labs/labs" || true
-
-            for bad in \
-              "$PUB/labs/qais-cshs-correlation-sweep-lab" \
-              "$PUB/labs/qais-density-matrix-encoding-metricies-lab" \
-              "$PRIV/labs/qais-cshs-correlation-sweep-lab" \
-              "$PRIV/labs/qais-density-matrix-encoding-metricies-lab"
-            do [ -d "$bad" ] && rm -rf "$bad" || true; done
-
-            find "$PUB"  -type d -exec chmod 755 {} \; || true
-            find "$PUB"  -type f -exec chmod 644 {} \; || true
-
-            echo "== AFTER CLEANUP (depth 2) =="
-            find "$PUB"  -maxdepth 2 -type d | sort || true
-            echo "---"
-            find "$PRIV" -maxdepth 2 -type d | sort || true
-            echo "================================"
-
-      # ---------- Prepare target (mkdir + chown) ----------
-      - name: 🧱 Prepare public target (mkdir + chown for qadmin)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTP_HOST_PUBLIC }}
-          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}      # root
-          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
-          port: 22
-          script: |
-            set -euo pipefail
-            BASE="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
-
-            # Base dirs
-            mkdir -p "$BASE" "$BASE/assets" "$BASE/html" "$BASE/labs"
-
-            # Ensure every current lab subdir exists (mirror repo list)
-            for L in \
-              qais-bloch-trajectories-lab \
-              qais-case-study-qalis-vs-crqc-llm-lab \
-              qais-chsh-correlation-sweep-lab \
-              qais-density-matrix-encoding-metrics-lab \
-              qais-grover-success-vs-noise \
-              qais-hybrid-pipeline-quantum-kernel-svm-lab \
-              qais-tiny-vqc-vs-logregression-lab \
-              qais-angle-encoding-statevectors-lab \
-              qais-bell-state-correlated-outcomes-lab \
-              qais-depth-noise-sensitivity-lab \
-              qais-quantum-teleportation-lab \
-              qais-superposition-lab \
-              qais-BB84-QKD-lab \
-              qais-VQE-Toy-Minimization-lab \
-              qais-entanglement-tamper-check-lab \
-              qais-fidelity-trace-distance-lab \
-              qais-quantum-kernel-svm-vs-logregression-lab \
-              qais-zz-expectation-scan-lab
-            do
-              mkdir -p "$BASE/labs/$L"
-            done
-
-            # Hand ownership to the SFTP user (qadmin) and friendly perms
-            chown -R qadmin:qadmin "/home/quscitech/public_html/instructors"
-            chmod -R 755 "/home/quscitech/public_html/instructors"
-
-            echo "== POST-PREP OWNERSHIP =="
-            ls -ld "$BASE" "$BASE/labs" || true
-            getfacl -p "$BASE" 2>/dev/null | head -n 20 || true
-            echo "✅ Prepared target for qadmin."
-
-      - name: 🗒️ List target permissions (post-prep)
+      # ---------- Prepare directories on remote (runs as root) ----------
+      - name: 🧱 Prepare public target (mkdir + chown for quscitech)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SFTP_HOST_PUBLIC }}
@@ -144,26 +56,35 @@ jobs:
           script: |
             set -euo pipefail
             BASE="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
-            ls -ld "$BASE" "$BASE/labs" "$BASE/assets" "$BASE/html" || true
-            ls -ld "$BASE/labs/"*/ 2>/dev/null || true
-            echo "id(qadmin):"
-            id qadmin || true
+            mkdir -p "$BASE/labs" "$BASE/assets" "$BASE/html"
+            chown -R quscitech:quscitech "$BASE"
+            chmod -R 755 "$BASE"
+            echo "✅ Ensured and prepared $BASE (owned by quscitech)"
 
+      - name: 🕵️ List target permissions (post-prep)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}
+          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
+          port: 22
+          script: |
+            ls -ld /home/quscitech/public_html/instructors/QST-INST-2025/resources
+            ls -ld /home/quscitech/public_html/instructors/QST-INST-2025/resources/labs || true
+
+      # ---------- Upload via SFTP (PUBLIC) ----------
       - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server:        ${{ secrets.SFTP_HOST_PUBLIC }}
-          username:      ${{ secrets.SFTP_USER_PUBLIC }}      # qadmin
-          password:      ${{ secrets.SFTP_PASSWORD_PUBLIC }}
-          port:          22
-          # Give the action a directory, not a glob; it will push its contents
-          local_path:    public_html/instructors/QST-INST-2025/resources
-          # *** KEY FIX *** use chroot-relative path (no /home/quscitech) + trailing slash
-          remote_path:   public_html/instructors/QST-INST-2025/resources/
-          sftp_only:     false
+          server:      ${{ secrets.SFTP_HOST_PUBLIC }}
+          username:    ${{ secrets.SFTP_USER_PUBLIC }}        # quscitech
+          password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}
+          port:        22
+          local_path:  public_html/instructors/QST-INST-2025/resources
+          remote_path: /home/quscitech/public_html/instructors/QST-INST-2025/resources/
+          sftp_only:   false
           args: -o StrictHostKeyChecking=no
           delete_remote_files: false
-
 
       - name: 🌐 Verify file reachable (curl smoke test with retry)
         env:
@@ -178,8 +99,9 @@ jobs:
             fi
             echo "⏳ Waiting and retrying ($i/8)..."; sleep 5
           done
-          echo "❌ Smoke test failed: file not reachable" >&2; exit 1
+          echo "::error::❌ Smoke test failed: file not reachable"; exit 1
 
+      # ---------- Email Notification ----------
       - name: 🔐 Decide if SMTP step should run
         env:
           SMTP_HOST:     ${{ secrets.SMTP_HOST }}
@@ -209,13 +131,14 @@ jobs:
           password:       ${{ secrets.SMTP_PASSWORD }}
           from:           ${{ secrets.MAIL_FROM }}
           to:             ${{ secrets.MAIL_TO }}
-          subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }} (PUBLIC)"
+          subject: "✅ Public Deploy Completed — ${{ github.repository }} @ ${{ github.sha }}"
           secure: ${{ env.SMTP_PORT == '465' }}
           body: |
-            ✅ Deployment completed to ${{ secrets.SFTP_HOST_PUBLIC }}:/home/quscitech/public_html/instructors/QST-INST-2025/resources
-            🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
-            Repo: ${{ github.repository }}
-            Commit: ${{ github.sha }}
-            By: ${{ github.actor }}
-
+            ✅ Public deployment completed successfully
+            🔗 Host: ${{ secrets.SFTP_HOST_PUBLIC }}
+            📂 Remote path: /home/quscitech/public_html/instructors/QST-INST-2025/resources/
+            🔎 Smoke test URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
+            🧠 Repo: ${{ github.repository }}
+            🧩 Commit: ${{ github.sha }}
+            👤 By: ${{ github.actor }}
 

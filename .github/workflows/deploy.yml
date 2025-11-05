@@ -1,4 +1,3 @@
-# .github/workflows/deploy.yml
 name: Deploy to QuSciTech (SFTP) + Smoke Test
 
 on:
@@ -14,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      SRC_BEGINNER: public/labs/Beginner_Labs
+      SRC_INTERMEDIATE: public/labs/Intermediate_Labs
+      SRC_ADVANCED: public/labs/Advanced_Labs
       WEB_README: public/labs/README.md
       REMOTE_BASE: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}/labs
 
@@ -36,46 +38,23 @@ jobs:
           rm -rf "$STAGE_DIR"
           mkdir -p "$STAGE_DIR"/{Beginner_Labs,Intermediate_Labs,Advanced_Labs}
 
-          # Helper: find the first directory named $1 anywhere in the repo
-          find_dir() {
-            local name="$1"
-            # look for directories with that basename (e.g. .../Beginner_Labs)
-            find . -type d -name "$name" -print -quit || true
-          }
+          cp -a "$SRC_BEGINNER"/.      "$STAGE_DIR/Beginner_Labs/"
+          cp -a "$SRC_INTERMEDIATE"/.  "$STAGE_DIR/Intermediate_Labs/"
+          cp -a "$SRC_ADVANCED"/.      "$STAGE_DIR/Advanced_Labs/"
 
-          for lab in Beginner_Labs Intermediate_Labs Advanced_Labs; do
-            src=$(find_dir "$lab" || true)
-            if [[ -n "$src" ]]; then
-              echo "Found $lab at: $src"
-              # copy entire directory tree into staging preserving subdirs
-              cp -a "$src"/. "$STAGE_DIR/$lab/"
-            else
-              echo "::warning ::Directory named '$lab' not found in the repository"
-            fi
-          done
-
-          # If there's a README at the expected path, copy it; otherwise try to find one
           if [[ -f "$WEB_README" ]]; then
             cp -a "$WEB_README" "$STAGE_DIR/README.md"
           else
-            # attempt to find a README under public* or instructors
-            alt_readme=$(find . -type f -iname "README.md" -path "*labs*" -print -quit || true)
-            if [[ -n "$alt_readme" ]]; then
-              echo "Found alternate README at: $alt_readme"
-              cp -a "$alt_readme" "$STAGE_DIR/README.md"
-            else
-              echo "::warning ::No README.md found near labs directories"
-            fi
+            echo "::warning ::No README.md found at $WEB_README"
           fi
 
       - name: List staged content (debug)
         shell: bash
         run: |
           echo "== staged tree (dirs) =="
-          # show full tree (no maxdepth) so nested notebooks are visible
-          find "$STAGE_DIR" -type d -printf "%P\n" | sort
-          echo "== staged files =="
-          find "$STAGE_DIR" -type f -printf "%P\n" | sort | sed -n '1,500p'
+          find "$STAGE_DIR" -maxdepth 2 -type d -printf "%P\n" | sort
+          echo "== staged files (sample) =="
+          find "$STAGE_DIR" -type f -maxdepth 2 -printf "%P\n" | sort | sed -n '1,50p'
 
       - name: Probe SFTP port 22 (non-blocking)
         shell: bash
@@ -101,12 +80,31 @@ jobs:
             mkdir -p "${{ env.REMOTE_BASE }}"
             ls -ld "${{ env.REMOTE_BASE }}"
 
-      - name: Assert staged dir exists (pre-upload)
+       - name: Assert staged dir exists (pre-upload)
         shell: bash
         run: |
           echo "Container expects path relative to /github/workspace:"
           echo "ls -la ./labs_stage"
-          ls -la ./labs_stage || true
+          ls -la ./labs_stage
+
+      - name: Enforce one+ notebook per lab
+        shell: bash
+        run: |
+          set -euo pipefail
+          miss=0
+          while IFS= read -r d; do
+            n=$(find "$d" -maxdepth 1 -type f -name '*.ipynb' | wc -l)
+            if (( n < 1 )); then
+              echo "::error ::$d has no notebooks"
+              miss=$((miss+1))
+            fi
+          done < <(find "$STAGE_DIR" -path '*/resources/notebooks' -type d)
+          (( miss == 0 )) || exit 1
+
+      - name: Remove notebook backups from stage
+        shell: bash
+        run: |
+          find "$STAGE_DIR" -type d \( -name _backup -o -name backup \) -prune -exec rm -rf {} +
 
       - name: Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
@@ -119,6 +117,7 @@ jobs:
           local_path: labs_stage
           remote_path: ${{ env.REMOTE_BASE }}/
           sftpArgs: "-o StrictHostKeyChecking=no"
+
 
       - name: Verify file reachable (smoke test)
         shell: bash
@@ -138,3 +137,6 @@ jobs:
           done
           echo "::error ::Smoke test failed for $URL"
           exit 1
+
+
+

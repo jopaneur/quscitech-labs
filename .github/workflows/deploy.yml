@@ -80,6 +80,13 @@ jobs:
             mkdir -p "${{ env.REMOTE_BASE }}"
             ls -ld "${{ env.REMOTE_BASE }}"
 
+      - name: Assert staged dir exists (pre-upload)
+        shell: bash
+        run: |
+          echo "Container expects path relative to /github/workspace:"
+          echo "ls -la ./labs_stage"
+          ls -la ./labs_stage
+
       - name: Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -87,9 +94,11 @@ jobs:
           username: ${{ secrets.SFTP_USER_PUBLIC }}
           password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}
           port: 22
-          local_path: ${{ env.STAGE_DIR }}   # pass the folder (no /*); action recurses
+          # IMPORTANT: container sees /github/workspace, so use workspace-relative path
+          local_path: labs_stage
           remote_path: ${{ env.REMOTE_BASE }}/
           sftpArgs: "-o StrictHostKeyChecking=no"
+
 
       - name: Verify file reachable (smoke test)
         shell: bash
@@ -109,4 +118,5 @@ jobs:
           done
           echo "::error ::Smoke test failed for $URL"
           exit 1
+
 

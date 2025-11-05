@@ -4,17 +4,19 @@ on:
   push:
     branches: [ main ]
     paths:
-      - '.github/workflows/deploy.yml'
-      - 'public/**'
-      - 'public_html/**'
+      - ".github/workflows/deploy.yml"
+      - "public/**"
+      - "public_html/**"
   workflow_dispatch: {}
+  schedule:
+    - cron: "0 9 * * *"
 
 permissions:
   contents: read
 
 env:
-  # Public smoke marker we publish under /resources/
-  SMOKE_PATH: hello-ci.html
+  PUBLIC_ROOT: /home/quscitech/public_html/instructors/QST-INST-2025
+  SMOKE_PATH:  resources/hello-ci.html
 
 jobs:
   deploy:
@@ -23,33 +25,49 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
+      # --- Stage a smoke-test file into the web-ready tree
       - name: 🧪 Ensure smoke-test file exists (PUBLIC)
         shell: bash
         run: |
-          set -euo pipefail
-          BASE="public_html/instructors/QST-INST-2025/resources"
-          mkdir -p "$BASE"
-          cat > "$BASE/${SMOKE_PATH}" <<'HTML'
+          set -e
+          mkdir -p public_html/instructors/QST-INST-2025/resources
+          cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
           <!doctype html><meta charset="utf-8">
           <title>QuSciTech CI Smoke Test (Public)</title>
           <h1>✅ CI/CD (public) is working</h1>
           <p id="marker">HELLO-CI</p>
           <p>Built at (UTC): __BUILD_TIME__</p>
           HTML
-          sed -i "s/__BUILD_TIME__/$(date -u +'%Y-%m-%d %H:%M:%S')/" "$BASE/${SMOKE_PATH}"
+          sed -i "s/__BUILD_TIME__/$(date -u +'%Y-%m-%d %H:%M:%S')/" public_html/instructors/QST-INST-2025/resources/hello-ci.html
 
-      - name: 🔎 Probe SFTP port 22 (non-blocking)
+      # --- Show we really have ALL 18 labs locally before upload (tiny debug)
+      - name: 🔎 Verify local web tree (flatten labs)
         shell: bash
         run: |
           set -e
-          HOST="${{ secrets.SFTP_HOST_PUBLIC }}"
-          echo "Probing $HOST:22 ..."
-          if timeout 10 bash -lc "cat < /dev/null > /dev/tcp/$HOST/22"; then
+          echo "::group::Local labs listing"
+          find public/labs -mindepth 2 -maxdepth 2 -type d -printf '%P\n' | sort
+          echo "::endgroup::"
+          # mirror to web-ready tree
+          mkdir -p public_html/instructors/QST-INST-2025/resources/labs
+          rsync -a --delete public/labs/ public_html/instructors/QST-INST-2025/resources/labs/
+          echo "Count in staged web tree:"
+          find public_html/instructors/QST-INST-2025/resources/labs -mindepth 1 -maxdepth 1 -type d | wc -l
+
+      - name: 🔎 Probe SFTP port 22 (non-blocking)
+        shell: bash
+        env:
+          HOST: ${{ secrets.SFTP_HOST_PUBLIC }}
+        run: |
+          set +e
+          echo "Probing ${HOST}:22 ..."
+          if timeout 10 bash -lc "cat < /dev/tcp/${HOST}/22" ; then
             echo "✅ Port 22 reachable"
           else
-            echo "::warning ::Port 22 NOT reachable (will attempt upload anyway)"
+            echo "::warning::Port 22 NOT reachable (will attempt upload anyway)"
           fi
 
+      # --- One-time cleanup hook (harmless if nothing to do)
       - name: 🧹 One-time cleanup (manual runs only)
         if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: appleboy/ssh-action@v1.0.3
@@ -60,12 +78,28 @@ jobs:
           port:     22
           script: |
             set -e
-            BASE="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
-            mkdir -p "$BASE"
-            # Remove only the labs folder to avoid nuking other assets.
-            rm -rf "$BASE/labs"
+            echo "No-op cleanup step (reserved)."
 
-      - name: 🧱 Prepare remote target (mkdir + chown quscitech)
+      # --- Prepare remote target; mkdir; chown iff running as root
+      - name: 🧱 Prepare remote target (mkdir + chown **)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SSH_USER_ROOT_PUBLIC || secrets.SFTP_USER_PUBLIC }}
+          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC || secrets.SFTP_PASSWORD_PUBLIC }}
+          port:     22
+          script: |
+            set -e
+            BASE="${{ env.PUBLIC_ROOT }}"
+            mkdir -p "$BASE/resources/labs"
+            if [ "$(id -u)" -eq 0 ]; then
+              chown -R quscitech:quscitech "$BASE"
+            fi
+            chmod -R 755 "$BASE"
+            echo "Prepared: $BASE"
+
+      # --- List perms so we can see ownership prior to upload
+      - name: 🗂️ List target permissions (post-prep)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host:     ${{ secrets.SFTP_HOST_PUBLIC }}
@@ -74,60 +108,23 @@ jobs:
           port:     22
           script: |
             set -e
-            BASE="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
-            mkdir -p "$BASE/labs"
-            chown -R quscitech:quscitech "/home/quscitech/public_html/instructors/QST-INST-2025"
-            chmod -R 755 "/home/quscitech/public_html/instructors/QST-INST-2025"
+            ls -ld  ${{ env.PUBLIC_ROOT }}
+            ls -ld  ${{ env.PUBLIC_ROOT }}/resources
+            ls -ld  ${{ env.PUBLIC_ROOT }}/resources/labs || true
 
-      - name: 🧾 List target permissions (post-prep)
+      # --- Remove any accidental nested 'resources/resources'
+      - name: 🧽 Remove accidental nested resources (safe if absent)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host:     ${{ secrets.SFTP_HOST_PUBLIC }}
           username: ${{ secrets.SFTP_USER_PUBLIC }}
           password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}
           port:     22
-        # show remote perms for quick sanity-check
           script: |
             set -e
-            ls -ld /home/quscitech/public_html/instructors/QST-INST-2025/resources
-            ls -ld /home/quscitech/public_html/instructors/QST-INST-2025/resources/labs || true
+            rm -rf ${{ env.PUBLIC_ROOT }}/resources/resources
 
-      # ---------- NEW: reliable local flatten + debug ----------
-      - name: 🗂️ Prepare local web tree (flatten labs)
-        shell: bash
-        run: |
-          set -euo pipefail
-          BASE="public_html/instructors/QST-INST-2025/resources"
-          SRC="public/labs"
-          DEST="$BASE/labs"
-
-          rm -rf "$DEST"
-          mkdir -p "$DEST"
-
-          # Copy each lab folder that sits one level under Beginner_/Intermediate_/Advanced_*
-          while IFS= read -r -d '' LABDIR; do
-            LABNAME="$(basename "$LABDIR")"
-            echo "→ Copying $LABDIR  ->  $DEST/$LABNAME"
-            cp -a "$LABDIR" "$DEST/$LABNAME"
-          done < <(find "$SRC" -mindepth 2 -maxdepth 2 -type d -print0)
-
-          echo "Local staging complete."
-
-      - name: 🔍 List staged web tree
-        shell: bash
-        run: |
-          set -e
-          DEST="public_html/instructors/QST-INST-2025/resources/labs"
-          echo "Staged labs:"
-          if command -v tree >/dev/null 2>&1; then
-            tree -a -L 2 "$DEST"
-          else
-            find "$DEST" -maxdepth 2 -type d -print | sort
-          fi
-          echo "Count:"
-          find "$DEST" -mindepth 1 -maxdepth 1 -type d | wc -l
-      # ---------- END NEW ----------
-
+      # --- Upload CONTENTS of resources (note the trailing /*)
       - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -135,41 +132,39 @@ jobs:
           port:         22
           username:     ${{ secrets.SFTP_USER_PUBLIC }}
           password:     ${{ secrets.SFTP_PASSWORD_PUBLIC }}
-          # Upload the prepared directory (no wildcard)
-          local_path:   public_html/instructors/QST-INST-2025/resources
-          remote_path:  /home/quscitech/public_html/instructors/QST-INST-2025/resources
+          local_path:   public_html/instructors/QST-INST-2025/resources/*
+          remote_path:  ${{ env.PUBLIC_ROOT }}/resources
           sftp_only:    false
           delete_remote_files: false
-          args: -o StrictHostKeyChecking=no
+          args: "-o StrictHostKeyChecking=no"
 
+      # --- Curl smoke test (ignore cert while DNS/cert stabilizes)
       - name: 🌐 Verify file reachable (curl smoke test with retry)
         shell: bash
         env:
-          BASE_URL: https://quscitech.com/instructors/QST-INST-2025/resources
+          VPS_IP:  ${{ secrets.VPS_IP }}
         run: |
-          set -euo pipefail
-          URL="${BASE_URL}/${SMOKE_PATH}"
+          set -e
+          URL="https://quscitech.com/instructors/QST-INST-2025/resources/hello-ci.html"
           echo "GET $URL"
-          for i in {1..4}; do
-            code=$(curl -fsSIL -o /dev/null -w "%{http_code}" "$URL" || true)
-            if [ "$code" = "200" ]; then
-              echo "✅ Smoke OK (200)"
-              exit 0
-            fi
-            echo "Attempt $i failed (code=$code); retrying..."
+          for i in 1 2 3; do
+            code=$(curl -k -sSL -o out.html -w "%{http_code}" --resolve "quscitech.com:443:${VPS_IP}" "$URL" || true)
+            echo "Attempt $i → HTTP $code"
+            grep -qi "HELLO-CI" out.html && { echo "✅ Smoke OK"; exit 0; }
             sleep 2
           done
-          echo "::error ::Smoke test failed for $URL"
-          exit 1
+          echo "::error::Smoke test failed"; exit 1
 
+      # --- (Optional) SMTP notify gated by secrets
       - name: 🤔 Decide if SMTP step should run
+        shell: bash
         env:
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_USER: ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASS: ${{ secrets.SMTP_PASSWORD }}
-          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          SMTP_HOST:     ${{ secrets.SMTP_HOST }}
+          SMTP_USER:     ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASS:     ${{ secrets.SMTP_PASSWORD }}
+          MAIL_FROM_SEC: ${{ secrets.MAIL_FROM }}
         run: |
-          if [ -n "${SMTP_HOST}" ] && [ -n "${SMTP_USER}" ] && [ -n "${SMTP_PASS}" ] && [ -n "${MAIL_FROM}" ]; then
+          if [ -n "${SMTP_HOST}" ] && [ -n "${SMTP_USER}" ] && [ -n "${SMTP_PASS}" ] && [ -n "${MAIL_FROM_SEC}" ]; then
             echo "HAS_SMTP=true" >> "$GITHUB_ENV"
           else
             echo "HAS_SMTP=false" >> "$GITHUB_ENV"
@@ -180,17 +175,17 @@ jobs:
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: ${{ secrets.SMTP_HOST }}
-          server_port:    587
-          secure:         false            # STARTTLS on 587
+          server_port:    ${{ secrets.SMTP_PORT }}
+          secure:         ${{ secrets.SMTP_PORT == '465' }}
           username:       ${{ secrets.SMTP_USERNAME }}
           password:       ${{ secrets.SMTP_PASSWORD }}
           from:           ${{ secrets.MAIL_FROM }}
           to:             ops@quscitech.com
-          subject: "✅ Public Deploy OK — ${{ github.repository }}"
+          subject: "✅ Public Deploy Succeeded — ${{ github.repository }}"
           convert_markdown: true
           body: |
-            ✅ Public deploy completed.
-            Repo: ${{ github.repository }}
-            Commit: ${{ github.sha }}
-            Labs URL: https://quscitech.com/instructors/QST-INST-2025/resources/labs/
+            ✅ Public deploy succeeded.
+            • Repo: ${{ github.repository }}
+            • Commit: ${{ github.sha }}
+            • URL: https://quscitech.com/instructors/QST-INST-2025/resources/hello-ci.html
 

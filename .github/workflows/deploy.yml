@@ -99,14 +99,17 @@ jobs:
           URL: "https://quscitech.com/instructors/QST-INST-2025/resources/hello-ci.html"
         run: |
           set -euo pipefail
+          echo "Checking $URL (3 attempts, 2-sec delay)..."
           for i in {1..3}; do
-            code=$(curl -sS -o /tmp/hello-ci.html -w '%{http_code}' "$URL" || true)
+            code=$(curl -sS -o /tmp/hello-ci.html -w '%{http_code}' \
+              --retry 3 --retry-delay 2 --fail "$URL" || true)
             if [[ "$code" == "200" ]]; then
               echo "✅ Smoke test passed (HTTP 200)"
               exit 0
             fi
-            echo "Attempt $i failed (HTTP $code). Retry in 3s..."; sleep 3
+            echo "Attempt $i failed (HTTP $code). Retrying in 3 s…"; sleep 3
           done
           echo "::error ::Smoke test failed for $URL"
           exit 1
+
 

@@ -1,3 +1,6 @@
+mkdir -p .github/workflows
+
+cat > .github/workflows/deploy.yml <<'YAML'
 name: Deploy to QuSciTech (SFTP) + Smoke Test
 
 on:
@@ -14,8 +17,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # correct usage of the runner temp context
-      STAGE_DIR: ${{ runner.temp }}/labs_stage
       SRC_BEGINNER: public/labs/Beginner_Labs
       SRC_INTERMEDIATE: public/labs/Intermediate_Labs
       SRC_ADVANCED: public/labs/Advanced_Labs
@@ -26,7 +27,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Build a tiered tree in a temp staging folder
+      # Use $RUNNER_TEMP via GITHUB_ENV (avoid runner.* expressions in env)
+      - name: Set staging path
+        shell: bash
+        run: |
+          echo "STAGE_DIR=$RUNNER_TEMP/labs_stage" >> "$GITHUB_ENV"
+          echo "Staging will use: $RUNNER_TEMP/labs_stage"
+
       - name: Prepare tiered labs tree (staging)
         shell: bash
         run: |
@@ -35,26 +42,22 @@ jobs:
           rm -rf "$STAGE_DIR"
           mkdir -p "$STAGE_DIR"/{Beginner_Labs,Intermediate_Labs,Advanced_Labs}
 
-          # copy each tier
           cp -a "$SRC_BEGINNER"/.      "$STAGE_DIR/Beginner_Labs/"
           cp -a "$SRC_INTERMEDIATE"/.  "$STAGE_DIR/Intermediate_Labs/"
           cp -a "$SRC_ADVANCED"/.      "$STAGE_DIR/Advanced_Labs/"
 
-          # optional README for the /labs root (won't fail if missing)
           if [[ -f "$WEB_README" ]]; then
             cp -a "$WEB_README" "$STAGE_DIR/README.md"
           fi
 
-      # Tiny debug so we can see exactly what will be uploaded
       - name: List staged content (debug)
         shell: bash
         run: |
-          echo "== staged tree =="
+          echo "== staged tree (dirs) =="
           find "$STAGE_DIR" -maxdepth 2 -type d -printf "%P\n" | sort
-          echo "== staged files sample =="
+          echo "== staged files (sample) =="
           find "$STAGE_DIR" -type f -maxdepth 2 -printf "%P\n" | sort | sed -n '1,50p'
 
-      # Non-blocking probe (just warns if 22 closed; we still try upload)
       - name: Probe SFTP port 22 (non-blocking)
         shell: bash
         run: |
@@ -67,8 +70,6 @@ jobs:
             echo "::warning ::Port 22 NOT reachable (will attempt upload anyway)"
           fi
 
-      # Create remote /labs (in case it was removed). If the account has no shell,
-      # this will silently be skipped.
       - name: Ensure remote /resources/labs exists (best-effort)
         uses: appleboy/ssh-action@v1.0.3
         continue-on-error: true
@@ -81,7 +82,6 @@ jobs:
             mkdir -p "${{ env.REMOTE_BASE }}"
             ls -ld "${{ env.REMOTE_BASE }}"
 
-      # Upload the *staged tiered tree* to /resources/labs
       - name: Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -89,14 +89,12 @@ jobs:
           username: ${{ secrets.SFTP_USER_PUBLIC }}
           password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}
           port: 22
-          # IMPORTANT: upload the STAGE_DIR *directory*, no wildcard
-          local_path: ${{ env.STAGE_DIR }}
-          remote_path: ${{ env.REMOTE_BASE }}
+          local_path: ${{ env.STAGE_DIR }}     # upload the staged dir (no wildcard)
+          remote_path: ${{ env.REMOTE_BASE }}  # ...to /resources/labs
           sftp_only: false
           args: "-o StrictHostKeyChecking=no"
           delete_remote_files: false
 
-      # Simple curl smoke check for the basic index/hello page if you like
       - name: Verify file reachable (smoke test)
         shell: bash
         continue-on-error: true
@@ -111,4 +109,5 @@ jobs:
             echo "Retry in 3s..."; sleep 3
           done
           echo "::warning ::Smoke test could not confirm $URL"
+YAML
 

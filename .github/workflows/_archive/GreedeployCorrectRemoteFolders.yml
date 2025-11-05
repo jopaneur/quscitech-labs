@@ -1,0 +1,161 @@
+name: Deploy to QuSciTech (SFTP) + Smoke Test
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'public_html/**'
+      - 'tools/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch: {}
+
+env:
+  WEB_HOSTNAME: quscitech.com
+  SMOKE_PATH: instructors/QST-INST-2025/resources/hello-ci.html
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧰 Checkout
+        uses: actions/checkout@v4
+
+      # --- make sure the smoke file exists locally ---
+      - name: 📝 Ensure smoke-test file exists (PUBLIC)
+        run: |
+          set -e
+          mkdir -p public_html/instructors/QST-INST-2025/resources
+          [ -f public_html/instructors/QST-INST-2025/resources/hello-ci.html ] || cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
+          <!doctype html><meta charset="utf-8">
+          <title>QuSciTech CI Smoke Test</title>
+          <h1>✅ CI/CD is working</h1>
+          <p>Built at: $(date -u)</p>
+          HTML
+
+      # --- non-blocking probe (don't fail the job just for a transient port block) ---
+      - name: 🔎 Probe SFTP port 22 (non-blocking)
+        run: |
+          set -e
+          HOST="${{ secrets.SFTP_HOST_PUBLIC }}"
+          echo "Probing $HOST:22 ..."
+          if timeout 10 bash -lc "cat < /dev/tcp/$HOST/22"; then
+            echo "✅ Port 22 reachable"
+          else
+            echo "::warning ::Port 22 NOT reachable (will attempt upload anyway)"
+          fi
+
+      # --- prepare remote side as root: create parent + resources, chown to 'quscitech' ---
+      - name: 🧱 Prepare remote target (mkdir + chown qadmin)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}     # root
+          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
+          port: 22
+          script: |
+            set -euo pipefail
+            BASE="/home/quscitech/public_html/instructors/QST-INST-2025"
+            RES="$BASE/resources"
+            LABS="$RES/labs"
+
+            mkdir -p "$LABS"
+            # fix any accidental nesting from previous runs
+            if [ -d "$RES/resources" ]; then
+              echo "Removing stray $RES/resources"
+              rm -rf "$RES/resources"
+            fi
+
+            chown -R quscitech:quscitech "$BASE"
+            find "$BASE" -type d -exec chmod 755 {} \; || true
+            find "$BASE" -type f -exec chmod 644 {} \; || true
+
+            echo "== AFTER PREP =="
+            ls -ld "$BASE" "$RES" "$LABS" || true
+
+      # --- show perms (diagnostic) ---
+      - name: 📋 List target permissions (post-prep)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}
+          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
+          port: 22
+          script: |
+            ls -ld /home/quscitech/public_html/instructors/QST-INST-2025 /home/quscitech/public_html/instructors/QST-INST-2025/resources
+            id quscitech || true
+
+      # --- SFTP upload ---
+      # IMPORTANT: we upload the *directory* "resources" into the *parent* on the server
+      # so the result is exactly .../instructors/QST-INST-2025/resources (no nesting).
+      - name: 📤 Upload via SFTP (PUBLIC)
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server:      ${{ secrets.SFTP_HOST_PUBLIC }}      # qram.quscitech.com
+          username:    ${{ secrets.SFTP_USER_PUBLIC }}      # quscitech
+          password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}
+          port:        22
+          # Upload the local "resources" folder...
+          local_path:  "public_html/instructors/QST-INST-2025/resources"
+          # ...into the *parent* on the server (this prevents resources/resources)
+          remote_path: "/home/quscitech/public_html/instructors/QST-INST-2025"
+          sftp_only:   false
+          args: -o StrictHostKeyChecking=no
+          delete_remote_files: false
+
+      # --- smoke test ---
+      - name: 🌐 Verify file reachable (curl smoke test with retry)
+        env:
+          VPS_IP: ${{ secrets.VPS_IP_PUBLIC }}
+        run: |
+          set -e
+          URL="https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
+          echo "Checking $URL"
+          for i in {1..8}; do
+            # NOTE: we accept existing cert on the host; add -k only if your cert hostname doesn't match yet
+            if curl -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
+              echo "✅ Smoke test passed"; exit 0
+            fi
+            echo "⏳ Waiting and retrying ($i/8)..."; sleep 5
+          done
+          echo "❌ Smoke test failed: file not reachable" >&2; exit 1
+
+      # --- optional email ---
+      - name: 🔐 Decide if SMTP step should run
+        env:
+          SMTP_HOST:     ${{ secrets.SMTP_HOST }}
+          SMTP_PORT_SEC: ${{ secrets.SMTP_PORT }}
+          SMTP_USER:     ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASS:     ${{ secrets.SMTP_PASSWORD }}
+          MAIL_FROM_SEC: ${{ secrets.MAIL_FROM }}
+          MAIL_TO_SEC:   ${{ secrets.MAIL_TO }}
+        run: |
+          set -e
+          if [ -n "${SMTP_HOST}" ] && [ -n "${SMTP_PORT_SEC}" ] && \
+             [ -n "${SMTP_USER}" ] && [ -n "${SMTP_PASS}" ] && \
+             [ -n "${MAIL_FROM_SEC}" ] && [ -n "${MAIL_TO_SEC}" ]; then
+            echo "HAS_SMTP=true" >> "$GITHUB_ENV"
+            echo "SMTP_PORT=${SMTP_PORT_SEC}" >> "$GITHUB_ENV"
+          else
+            echo "HAS_SMTP=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: ✉️ Send deploy email
+        if: env.HAS_SMTP == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port:    ${{ env.SMTP_PORT }}
+          username:       ${{ secrets.SMTP_USERNAME }}
+          password:       ${{ secrets.SMTP_PASSWORD }}
+          from:           ${{ secrets.MAIL_FROM }}
+          to:             ${{ secrets.MAIL_TO }}
+          subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
+          secure: ${{ env.SMTP_PORT == '465' }}  # STARTTLS if 587
+          body: |
+            ✅ Deployment completed to ${{ secrets.SFTP_HOST_PUBLIC }}:/home/quscitech/public_html/instructors/QST-INST-2025
+            🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
+            Repo: ${{ github.repository }}
+            Commit: ${{ github.sha }}
+            By: ${{ github.actor }}
+

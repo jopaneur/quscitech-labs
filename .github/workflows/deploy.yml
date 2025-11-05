@@ -23,12 +23,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Use $RUNNER_TEMP via GITHUB_ENV (avoid runner.* expressions in job-level env)
+      # Put staging inside the workspace so container-based actions can see it
       - name: Set staging path
         shell: bash
         run: |
-          echo "STAGE_DIR=$RUNNER_TEMP/labs_stage" >> "$GITHUB_ENV"
-          echo "Staging will use: $RUNNER_TEMP/labs_stage"
+          echo "STAGE_DIR=$GITHUB_WORKSPACE/labs_stage" >> "$GITHUB_ENV"
+          echo "Staging will use: $GITHUB_WORKSPACE/labs_stage"
 
       - name: Prepare tiered labs tree (staging)
         shell: bash
@@ -87,9 +87,7 @@ jobs:
           username: ${{ secrets.SFTP_USER_PUBLIC }}
           password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}
           port: 22
-          # Upload the CONTENTS of the staged dir (no extra nesting)
-          local_path: ${{ env.STAGE_DIR }}/*
-          # ...to /home/.../resources/labs
+          local_path: ${{ env.STAGE_DIR }}   # pass the folder (no /*); action recurses
           remote_path: ${{ env.REMOTE_BASE }}/
           sftpArgs: "-o StrictHostKeyChecking=no"
 
@@ -111,5 +109,4 @@ jobs:
           done
           echo "::error ::Smoke test failed for $URL"
           exit 1
-
 

@@ -5,7 +5,6 @@ on:
     branches: [ main ]
     paths:
       - 'public_html/**'
-      - 'public/**'
       - 'tools/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch: {}
@@ -17,136 +16,121 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: 🧰 Checkout
         uses: actions/checkout@v4
 
-      # Build the exact web tree we want to upload
-      - name: 🧱 Prepare local web tree (flatten labs)
+      - name: 📝 Ensure smoke-test file exists (PUBLIC)
+        shell: bash
         run: |
-          set -euo pipefail
-          WEB_ROOT="public_html/instructors/QST-INST-2025/resources"
-          LABS_SRC="public/labs"
-          LABS_DST="$WEB_ROOT/labs"
-
-          # smoke file
-          mkdir -p "$WEB_ROOT"
-          [ -f "$WEB_ROOT/hello-ci.html" ] || cat > "$WEB_ROOT/hello-ci.html" <<'HTML'
+          set -e
+          mkdir -p public_html/instructors/QST-INST-2025/resources
+          [ -f public_html/instructors/QST-INST-2025/resources/hello-ci.html ] || cat > public_html/instructors/QST-INST-2025/resources/hello-ci.html <<'HTML'
           <!doctype html><meta charset="utf-8">
           <title>QuSciTech CI Smoke Test</title>
           <h1>✅ CI/CD is working</h1>
           <p>Built at: $(date -u)</p>
           HTML
-
-          # rebuild flat labs/
-          rm -rf "$LABS_DST"
-          mkdir -p "$LABS_DST"
-
-          # Copy every leaf lab (depth=2) into labs/<leaf>/
-          find "$LABS_SRC" -mindepth 2 -maxdepth 2 -type d -print0 \
-            | while IFS= read -r -d '' d; do
-                leaf="$(basename "$d")"
-                rsync -a "$d/" "$LABS_DST/$leaf/"
-              done
-
-          # If you keep a curated README at this repo path, copy it in
-          if [ -f "$LABS_SRC/README.web.md" ]; then
-            cp -f "$LABS_SRC/README.web.md" "$LABS_DST/README.md"
-          fi
-
-          echo "Local web tree ready:"
-          find "$WEB_ROOT" -maxdepth 2 -type d -printf " - %p\n" | sort
+          ls -lah public_html/instructors/QST-INST-2025/resources || true
 
       - name: 🔎 Probe SFTP port 22 (non-blocking)
+        shell: bash
         continue-on-error: true
+        env:
+          HOST: ${{ secrets.SFTP_HOST_PUBLIC }}
         run: |
           set -e
-          HOST="${{ secrets.SFTP_HOST_PUBLIC }}"
           echo "Probing $HOST:22 ..."
-          if timeout 10 bash -lc "cat < /dev/tcp/$HOST/22"; then
+          if timeout 10 bash -lc 'cat < /dev/tcp/${HOST}/22' ; then
             echo "✅ Port 22 reachable"
           else
-            echo "::warning ::❌ Port 22 NOT reachable (will attempt upload anyway)"
+            echo "::warning ::Port 22 NOT reachable (will attempt upload anyway)"
           fi
 
-      # One-time fix for accidental resources/resources/ nesting
+      # Run this manually if you ever need to clean up server leftovers.
       - name: 🧹 One-time cleanup (manual runs only)
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        continue-on-error: true
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SFTP_HOST_PUBLIC }}
-          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}
+          host:     ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}     # root
           password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
           port: 22
           script: |
             set -euo pipefail
             BASE="/home/quscitech/public_html/instructors/QST-INST-2025"
+            echo "Before cleanup:"
+            find "$BASE" -maxdepth 3 -type d | sed "s|$BASE||" | sort || true
+
+            # Remove accidental nested tree: /resources/resources
             if [ -d "$BASE/resources/resources" ]; then
-              rsync -a "$BASE/resources/resources/" "$BASE/resources/"
+              echo "Removing nested: $BASE/resources/resources"
               rm -rf "$BASE/resources/resources"
-              echo "Flattened nested resources/."
             fi
+
+            echo "After cleanup:"
+            find "$BASE" -maxdepth 3 -type d | sed "s|$BASE||" | sort || true
 
       - name: 🧱 Prepare remote target (mkdir + chown qadmin)
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SFTP_HOST_PUBLIC }}
+          host:     ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}     # root
+          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
+          port: 22
+          script: |
+            set -euo pipefail
+            BASE="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
+            mkdir -p "$BASE" "$BASE/labs"
+            chown -R qadmin:qadmin "$BASE"
+            chmod -R 755 "$BASE"
+
+      - name: 🔍 Show remote perms (post-prep)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.SFTP_HOST_PUBLIC }}
           username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}
           password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
           port: 22
           script: |
             set -euo pipefail
-            PUBLIC_ROOT="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
-            mkdir -p "$PUBLIC_ROOT/labs" "$PUBLIC_ROOT/assets" "$PUBLIC_ROOT/html"
-            chown -R qadmin:qadmin "$PUBLIC_ROOT"
-            find "$PUBLIC_ROOT" -type d -exec chmod 755 {} \; || true
-            find "$PUBLIC_ROOT" -type f -exec chmod 644 {} \; || true
-            echo "Remote prepared at $PUBLIC_ROOT"
+            BASE="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
+            ls -ld "$BASE" "$BASE/labs" || true
+            getfacl -p "$BASE" 2>/dev/null || true
 
-      - name: 📋 Show remote perms (post-prep)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTP_HOST_PUBLIC }}
-          username: ${{ secrets.SSH_USER_ROOT_PUBLIC }}
-          password: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
-          port: 22
-        # not fatal if ls fails
-          script: |
-            set -e
-            TARGET="/home/quscitech/public_html/instructors/QST-INST-2025/resources"
-            ls -ld "$TARGET" || true
-            ls -ld "$TARGET/labs" || true
-
-      # Upload the CONTENTS of resources/ (prevents resources/resources)
       - name: 📤 Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server:      ${{ secrets.SFTP_HOST_PUBLIC }}
-          username:    ${{ secrets.SFTP_USER_PUBLIC }}      # qadmin
-          password:    ${{ secrets.SFTP_PASSWORD_PUBLIC }}
-          port:        22
-          local_path:  "public_html/instructors/QST-INST-2025/resources/*"
-          remote_path: "/home/quscitech/public_html/instructors/QST-INST-2025/resources"
-          sftp_only:   false
+          server:           ${{ secrets.SFTP_HOST_PUBLIC }}
+          username:         ${{ secrets.SFTP_USER_PUBLIC }}       # qadmin
+          password:         ${{ secrets.SFTP_PASSWORD_PUBLIC }}
+          port:             22
+          # IMPORTANT: pass the DIRECTORY (no wildcard)
+          local_path:       public_html/instructors/QST-INST-2025/resources
+          remote_path:      /home/quscitech/public_html/instructors/QST-INST-2025/resources
+          sftp_only:        false
           delete_remote_files: false
           args: -o StrictHostKeyChecking=no
 
       - name: 🌐 Verify file reachable (curl smoke test with retry)
         env:
           VPS_IP: ${{ secrets.VPS_IP_PUBLIC }}
+        shell: bash
         run: |
           set -e
           URL="https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}"
           echo "Checking $URL"
+          # Use -k temporarily if cert SANs don't include hostname (remove once cert is fixed)
           for i in {1..8}; do
             if curl -k -fsSIL --resolve "${{ env.WEB_HOSTNAME }}:443:${VPS_IP}" "$URL"; then
               echo "✅ Smoke test passed"; exit 0
             fi
-            echo "⏳ Waiting and retrying ($i/8)…"; sleep 5
+            echo "⏳ Waiting and retrying ($i/8)..."; sleep 5
           done
-          echo "❌ Smoke test failed" >&2; exit 1
+          echo "❌ Smoke test failed: file not reachable" >&2; exit 1
 
+      # ---------- Optional email notice ----------
       - name: 🔐 Decide if SMTP step should run
         env:
           SMTP_HOST:     ${{ secrets.SMTP_HOST }}
@@ -155,6 +139,7 @@ jobs:
           SMTP_PASS:     ${{ secrets.SMTP_PASSWORD }}
           MAIL_FROM_SEC: ${{ secrets.MAIL_FROM }}
           MAIL_TO_SEC:   ${{ secrets.MAIL_TO }}
+        shell: bash
         run: |
           set -e
           if [ -n "${SMTP_HOST}" ] && [ -n "${SMTP_PORT_SEC}" ] && \
@@ -170,18 +155,18 @@ jobs:
         if: env.HAS_SMTP == 'true'
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: ${{ secrets.SMTP_HOST }}
-          server_port:    ${{ env.SMTP_PORT }}
+          server_address: ${{ secrets.SMTP_HOST }}         # qram.quscitech.com
+          server_port:    ${{ env.SMTP_PORT }}             # 465=SSL, 587=STARTTLS
+          secure:         ${{ env.SMTP_PORT == '465' }}
           username:       ${{ secrets.SMTP_USERNAME }}
           password:       ${{ secrets.SMTP_PASSWORD }}
           from:           ${{ secrets.MAIL_FROM }}
           to:             ${{ secrets.MAIL_TO }}
-          secure:         ${{ env.SMTP_PORT == '465' }}
-          subject: "QuSciTech Public Deploy: ${{ github.repository }} @ ${{ github.sha }}"
+          subject: "QuSciTech Deploy: ${{ github.repository }} @ ${{ github.sha }}"
           body: |
-            ✅ Public deployment completed to ${{ secrets.SFTP_HOST_PUBLIC }}:/home/quscitech/public_html/instructors/QST-INST-2025/resources
-            🔎 Smoke: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
-            Repo:   ${{ github.repository }}
+            ✅ Deployment completed to ${{ secrets.SFTP_HOST_PUBLIC }}:/home/quscitech/public_html/instructors/QST-INST-2025/resources
+            🔎 Smoke check URL: https://${{ env.WEB_HOSTNAME }}/${{ env.SMOKE_PATH }}
+            Repo: ${{ github.repository }}
             Commit: ${{ github.sha }}
-            By:     ${{ github.actor }}
+            By: ${{ github.actor }}
 

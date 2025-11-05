@@ -3,83 +3,112 @@ name: Deploy to QuSciTech (SFTP) + Smoke Test
 on:
   push:
     branches: [ main ]
+    paths:
+      - "public/labs/**"
+      - "public_html/instructors/QST-INST-2025/resources/labs/README.md"
+      - ".github/workflows/deploy.yml"
   workflow_dispatch:
-
-env:
-  HOST_PUBLIC: ${{ secrets.SFTP_HOST_PUBLIC }}
-  SFTP_USER: ${{ secrets.SFTP_USER_PUBLIC }}
-  SFTP_PASS: ${{ secrets.SFTP_PASSWORD_PUBLIC }}
-  SSH_ROOT: ${{ secrets.SSH_USER_ROOT_PUBLIC }}
-  SSH_ROOT_PW: ${{ secrets.SSH_PASSWORD_ROOT_PUBLIC }}
-  REMOTE_BASE: /home/quscitech/public_html/instructors/QST-INST-2025/resources
-  STAGE_DIR: "${{ runner.temp }}/webroot"   # ✅ Fixed expression syntax
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      # correct usage of the runner temp context
+      STAGE_DIR: ${{ runner.temp }}/labs_stage
+      SRC_BEGINNER: public/labs/Beginner_Labs
+      SRC_INTERMEDIATE: public/labs/Intermediate_Labs
+      SRC_ADVANCED: public/labs/Advanced_Labs
+      WEB_README: public_html/instructors/QST-INST-2025/resources/labs/README.md
+      REMOTE_BASE: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}/labs
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare local web tree (tiered labs)
+      # Build a tiered tree in a temp staging folder
+      - name: Prepare tiered labs tree (staging)
+        shell: bash
         run: |
           set -euo pipefail
+          echo "Staging path: $STAGE_DIR"
           rm -rf "$STAGE_DIR"
-          mkdir -p "$STAGE_DIR"/{Advanced_Labs,Beginner_Labs,Intermediate_Labs}
-          rsync -a --delete "public/labs/Advanced_Labs/" "$STAGE_DIR/Advanced_Labs/"
-          rsync -a --delete "public/labs/Beginner_Labs/" "$STAGE_DIR/Beginner_Labs/"
-          rsync -a --delete "public/labs/Intermediate_Labs/" "$STAGE_DIR/Intermediate_Labs/"
-          if [ -f "public_html/instructors/QST-INST-2025/resources/labs/README.md" ]; then
-            cp -f "public_html/instructors/QST-INST-2025/resources/labs/README.md" "$STAGE_DIR/README.md"
+          mkdir -p "$STAGE_DIR"/{Beginner_Labs,Intermediate_Labs,Advanced_Labs}
+
+          # copy each tier
+          cp -a "$SRC_BEGINNER"/.      "$STAGE_DIR/Beginner_Labs/"
+          cp -a "$SRC_INTERMEDIATE"/.  "$STAGE_DIR/Intermediate_Labs/"
+          cp -a "$SRC_ADVANCED"/.      "$STAGE_DIR/Advanced_Labs/"
+
+          # optional README for the /labs root (won't fail if missing)
+          if [[ -f "$WEB_README" ]]; then
+            cp -a "$WEB_README" "$STAGE_DIR/README.md"
           fi
 
-      - name: Show staged contents (debug)
+      # Tiny debug so we can see exactly what will be uploaded
+      - name: List staged content (debug)
+        shell: bash
         run: |
-          echo "Staged path: $STAGE_DIR"
-          find "$STAGE_DIR" -maxdepth 3 -type f | sort | sed -n '1,100p'
+          echo "== staged tree =="
+          find "$STAGE_DIR" -maxdepth 2 -type d -printf "%P\n" | sort
+          echo "== staged files sample =="
+          find "$STAGE_DIR" -type f -maxdepth 2 -printf "%P\n" | sort | sed -n '1,50p'
 
+      # Non-blocking probe (just warns if 22 closed; we still try upload)
       - name: Probe SFTP port 22 (non-blocking)
+        shell: bash
         run: |
           set +e
-          echo "Probing ${HOST_PUBLIC}:22..."
-          if timeout 10 bash -lc "cat </dev/null >/dev/tcp/${HOST_PUBLIC}/22"; then
+          HOST="${{ secrets.SFTP_HOST_PUBLIC }}"
+          echo "Probing $HOST:22 ..."
+          if timeout 10 bash -lc "cat </dev/null >/dev/tcp/$HOST/22"; then
             echo "✅ Port 22 reachable"
           else
             echo "::warning ::Port 22 NOT reachable (will attempt upload anyway)"
           fi
 
-      - name: Prepare remote target (mkdir + chown quscitech)
+      # Create remote /labs (in case it was removed). If the account has no shell,
+      # this will silently be skipped.
+      - name: Ensure remote /resources/labs exists (best-effort)
         uses: appleboy/ssh-action@v1.0.3
+        continue-on-error: true
         with:
-          host: ${{ env.HOST_PUBLIC }}
-          username: ${{ env.SSH_ROOT }}
-          password: ${{ env.SSH_ROOT_PW }}
+          host:     ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SFTP_USER_PUBLIC }}
+          password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}
           port: 22
           script: |
-            set -eux
-            BASE="${REMOTE_BASE}"
-            mkdir -p "$BASE/Advanced_Labs" "$BASE/Beginner_Labs" "$BASE/Intermediate_Labs"
-            chown -R quscitech:quscitech "$BASE"
-            chmod -R 755 "$BASE"
-            echo "✅ Verified remote base permissions for $BASE"
+            mkdir -p "${{ env.REMOTE_BASE }}"
+            ls -ld "${{ env.REMOTE_BASE }}"
 
+      # Upload the *staged tiered tree* to /resources/labs
       - name: Upload via SFTP (PUBLIC)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server: ${{ env.HOST_PUBLIC }}
-          username: ${{ env.SFTP_USER }}
-          password: ${{ env.SFTP_PASS }}
+          server:   ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SFTP_USER_PUBLIC }}
+          password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}
           port: 22
-          sftp_only: false
+          # IMPORTANT: upload the STAGE_DIR *directory*, no wildcard
           local_path: ${{ env.STAGE_DIR }}
           remote_path: ${{ env.REMOTE_BASE }}
+          sftp_only: false
           args: "-o StrictHostKeyChecking=no"
           delete_remote_files: false
 
-      - name: Verify file reachable (optional)
-        run: echo "Skipping smoke test step for now."
-
-      - name: Complete job
-        run: echo "✅ Tiered lab deployment completed successfully."
+      # Simple curl smoke check for the basic index/hello page if you like
+      - name: Verify file reachable (smoke test)
+        shell: bash
+        continue-on-error: true
+        env:
+          URL: "https://qram.quscitech.com/instructors/QST-INST-2025/resources/hello-ci.html"
+        run: |
+          for i in {1..3}; do
+            if curl -fsSIL "$URL" >/dev/null; then
+              echo "✅ Smoke test passed"
+              exit 0
+            fi
+            echo "Retry in 3s..."; sleep 3
+          done
+          echo "::warning ::Smoke test could not confirm $URL"
 

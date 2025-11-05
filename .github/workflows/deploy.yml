@@ -1,5 +1,5 @@
 name: Deploy to QuSciTech (SFTP) + Smoke Test
-
+      # ---------- test deploy.yml ----------
 on:
   push:
     branches: [ main ]
@@ -96,4 +96,5 @@ jobs:
       # ---------- Optional: ping a known file if you host a small marker ----------
       - name: Decide if SMTP step should run
         run: echo "Skipping email step here."
+
 

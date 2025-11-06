@@ -4,7 +4,7 @@
 This lab introduces **angle encoding** — a foundational quantum data encoding technique  
 used to map classical information into the amplitudes of quantum statevectors.
 
-Learners explore:
+## Learners explore:
 - The conceptual flow from classical data → Bloch sphere rotations.
 - How **angle-encoded qubits** represent normalized input vectors.
 - Visualization of **statevectors** and amplitude distributions.

@@ -94,6 +94,9 @@ jobs:
           chmod 600 /tmp/deploy_key
           command -v ssh >/dev/null 2>&1 || sudo apt-get update -y && sudo apt-get install -y openssh-client
 
+      # -------------------------------------------------------------------
+      # FIXED: Ensure remote public labs directory exists + echo path
+      # -------------------------------------------------------------------
       - name: "🏗️ Ensure remote public labs directory exists"
         shell: bash
         env:
@@ -101,9 +104,13 @@ jobs:
           U: ${{ secrets.SFTP_USER_PUBLIC }}
         run: |
           set -euo pipefail
+          echo "REMOTE_BASE is: ${REMOTE_BASE}"
           ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no "${U}@${H}" \
             "mkdir -p '${REMOTE_BASE}' && ls -ld '${REMOTE_BASE}'"
 
+      # -------------------------------------------------------------------
+      # FIXED: Clean, simple scp target (no nested quotes)
+      # -------------------------------------------------------------------
       - name: "📤 Upload staged labs (scp, key-based)"
         shell: bash
         env:
@@ -111,9 +118,10 @@ jobs:
           U: ${{ secrets.SFTP_USER_PUBLIC }}
         run: |
           set -euo pipefail
+          echo "Uploading to REMOTE_BASE=${REMOTE_BASE}"
           if [ -d "$STAGE_DIR" ]; then
             scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r "$STAGE_DIR"/* \
-              "${U}@${H}:'${REMOTE_BASE}/'" || {
+              "${U}@${H}:${REMOTE_BASE}/" || {
                 echo "::error::scp upload failed"
                 exit 1
               }

@@ -1,4 +1,4 @@
-name: Deploy to QuSciTech (SFTP) + Smoke Test
+name: Deploy (Key-based) to QuSciTech (Public Labs) + Smoke Test
 
 on:
   push:
@@ -7,6 +7,9 @@ on:
       - 'public/labs/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch: {}
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
@@ -18,18 +21,20 @@ jobs:
       SRC_ADVANCED: public/labs/Advanced_Labs
       WEB_README: public/labs/README.md
       REMOTE_BASE: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}/labs
+      SMOKE_URL: "https://quscitech.com/instructors/QST-INST-2025/resources/hello-ci.html"
 
     steps:
-      - name: Checkout
+      - name: "📥 Checkout"
         uses: actions/checkout@v4
 
-      - name: Set staging path
+      - name: "🗂️ Set staging path"
         shell: bash
         run: |
+          set -euo pipefail
           echo "STAGE_DIR=$GITHUB_WORKSPACE/labs_stage" >> "$GITHUB_ENV"
           echo "Staging will use: $GITHUB_WORKSPACE/labs_stage"
 
-      - name: Prepare tiered labs tree (staging)
+      - name: "🏗️ Prepare tiered labs tree (staging)"
         shell: bash
         run: |
           set -euo pipefail
@@ -47,7 +52,7 @@ jobs:
             echo "::warning ::No README.md found at $WEB_README"
           fi
 
-      - name: List staged content (debug)
+      - name: "🔎 List staged content (debug)"
         shell: bash
         run: |
           echo "== staged tree (dirs) =="
@@ -55,38 +60,7 @@ jobs:
           echo "== staged files (sample) =="
           find "$STAGE_DIR" -type f -maxdepth 2 -printf "%P\n" | sort | sed -n '1,50p'
 
-      - name: Probe SFTP port 22 (non-blocking)
-        shell: bash
-        run: |
-          set +e
-          HOST="${{ secrets.SFTP_HOST_PUBLIC }}"
-          echo "Probing $HOST:22 ..."
-          if timeout 10 bash -lc "cat </dev/null >/dev/tcp/$HOST/22"; then
-            echo "✅ Port 22 reachable"
-          else
-            echo "::warning ::Port 22 NOT reachable (will attempt upload anyway)"
-          fi
-
-      - name: Ensure remote /resources/labs exists (best-effort)
-        uses: appleboy/ssh-action@v1.1.0
-        continue-on-error: true
-        with:
-          host:     ${{ secrets.SFTP_HOST_PUBLIC }}
-          username: ${{ secrets.SFTP_USER_PUBLIC }}
-          key:      ${{ secrets.SFTP_PRIVATE_KEY }}
-          port: 22
-          script: |
-            mkdir -p "${{ env.REMOTE_BASE }}"
-            ls -ld "${{ env.REMOTE_BASE }}"
-
-      - name: Assert staged dir exists (pre-upload)
-        shell: bash
-        run: |
-          echo "Container expects path relative to /github/workspace:"
-          echo "ls -la ./labs_stage"
-          ls -la ./labs_stage
-
-      - name: Enforce one+ notebook per lab
+      - name: "🧪 Enforce one+ notebook per lab"
         shell: bash
         run: |
           set -euo pipefail
@@ -100,26 +74,59 @@ jobs:
           done < <(find "$STAGE_DIR" -path '*/resources/notebooks' -type d)
           (( miss == 0 )) || exit 1
 
-      - name: Remove notebook backups from stage
+      - name: "🧹 Remove notebook backups from stage"
         shell: bash
         run: |
+          set -euo pipefail
           find "$STAGE_DIR" -type d \( -name _backup -o -name backup \) -prune -exec rm -rf {} +
 
-      - name: Upload via SFTP (PUBLIC)
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-        with:
-          server:   ${{ secrets.SFTP_HOST_PUBLIC }}
-          username: ${{ secrets.SFTP_USER_PUBLIC }}
-          ssh_private_key: ${{ secrets.SFTP_PRIVATE_KEY }}
-          port: 22
-          local_path: labs_stage       # workspace-relative
-          remote_path: ${{ env.REMOTE_BASE }}/
-          sftpArgs: "-o StrictHostKeyChecking=no"
-
-      - name: Verify file reachable (smoke test)
+      - name: "🔐 Write deploy private key (temporary)"
         shell: bash
         env:
-          URL: "https://quscitech.com/instructors/QST-INST-2025/resources/hello-ci.html"
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DEPLOY_KEY:-}" ]; then
+            echo "::error::DEPLOY_SSH_KEY is empty; cannot continue"
+            exit 1
+          fi
+          printf "%s\n" "${DEPLOY_KEY}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          command -v ssh >/dev/null 2>&1 || sudo apt-get update -y && sudo apt-get install -y openssh-client
+
+      - name: "🏗️ Ensure remote public labs directory exists"
+        shell: bash
+        env:
+          H: ${{ secrets.SFTP_HOST }}
+          U: ${{ secrets.SFTP_USER }}
+        run: |
+          set -euo pipefail
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no "${U}@${H}" \
+            "mkdir -p '${REMOTE_BASE}' && ls -ld '${REMOTE_BASE}'"
+
+      - name: "📤 Upload staged labs (scp, key-based)"
+        shell: bash
+        env:
+          H: ${{ secrets.SFTP_HOST }}
+          U: ${{ secrets.SFTP_USER }}
+        run: |
+          set -euo pipefail
+          if [ -d "$STAGE_DIR" ]; then
+            scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r "$STAGE_DIR"/* \
+              "${U}@${H}:'${REMOTE_BASE}/'" || {
+                echo "::error::scp upload failed"
+                exit 1
+              }
+            echo "✅ Uploaded labs_stage/* to ${REMOTE_BASE}/"
+          else
+            echo "::error::labs_stage directory not found"
+            exit 1
+          fi
+
+      - name: "🌐 Verify smoke file reachable (HTTP)"
+        shell: bash
+        env:
+          URL: ${{ env.SMOKE_URL }}
         run: |
           set -euo pipefail
           echo "Checking $URL (3 attempts, 2-sec delay)..."
@@ -134,3 +141,13 @@ jobs:
           done
           echo "::error ::Smoke test failed for $URL"
           exit 1
+
+      - name: "🧹 Cleanup deploy key"
+        if: always()
+        shell: bash
+        run: |
+          shred -u /tmp/deploy_key 2>/dev/null || rm -f /tmp/deploy_key || true
+
+      - name: "🧾 Complete job"
+        shell: bash
+        run: echo "Public labs deploy complete"

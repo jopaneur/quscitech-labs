@@ -83,22 +83,22 @@ jobs:
       - name: "🔐 Write deploy private key (temporary)"
         shell: bash
         env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           set -euo pipefail
-          if [ -z "${DEPLOY_KEY:-}" ]; then
+          if [ -z "${DEPLOY_SSH_KEY:-}" ]; then
             echo "::error::DEPLOY_SSH_KEY is empty; cannot continue"
             exit 1
           fi
-          printf "%s\n" "${DEPLOY_KEY}" > /tmp/deploy_key
+          printf "%s\n" "${DEPLOY_SSH_KEY}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
           command -v ssh >/dev/null 2>&1 || sudo apt-get update -y && sudo apt-get install -y openssh-client
 
       - name: "🏗️ Ensure remote public labs directory exists"
         shell: bash
         env:
-          H: ${{ secrets.SFTP_HOST }}
-          U: ${{ secrets.SFTP_USER }}
+          H: ${{ secrets.SFTP_HOST_PUBLIC }}
+          U: ${{ secrets.SFTP_USER_PUBLIC }}
         run: |
           set -euo pipefail
           ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no "${U}@${H}" \
@@ -107,8 +107,8 @@ jobs:
       - name: "📤 Upload staged labs (scp, key-based)"
         shell: bash
         env:
-          H: ${{ secrets.SFTP_HOST }}
-          U: ${{ secrets.SFTP_USER }}
+          H: ${{ secrets.SFTP_HOST_PUBLIC }}
+          U: ${{ secrets.SFTP_USER_PUBLIC }}
         run: |
           set -euo pipefail
           if [ -d "$STAGE_DIR" ]; then

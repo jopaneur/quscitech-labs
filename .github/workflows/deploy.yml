@@ -73,7 +73,7 @@ jobs:
         with:
           host:     ${{ secrets.SFTP_HOST_PUBLIC }}
           username: ${{ secrets.SFTP_USER_PUBLIC }}
-          password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}
+          key:      ${{ secrets.SFTP_PRIVATE_KEY }}
           port: 22
           script: |
             mkdir -p "${{ env.REMOTE_BASE }}"
@@ -110,7 +110,7 @@ jobs:
         with:
           server:   ${{ secrets.SFTP_HOST_PUBLIC }}
           username: ${{ secrets.SFTP_USER_PUBLIC }}
-          password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}
+          ssh_private_key: ${{ secrets.SFTP_PRIVATE_KEY }}
           port: 22
           local_path: labs_stage       # workspace-relative
           remote_path: ${{ env.REMOTE_BASE }}/

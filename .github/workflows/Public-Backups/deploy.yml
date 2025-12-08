@@ -1,0 +1,136 @@
+name: Deploy to QuSciTech (SFTP) + Smoke Test
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'public/labs/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      SRC_BEGINNER: public/labs/Beginner_Labs
+      SRC_INTERMEDIATE: public/labs/Intermediate_Labs
+      SRC_ADVANCED: public/labs/Advanced_Labs
+      WEB_README: public/labs/README.md
+      REMOTE_BASE: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}/labs
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set staging path
+        shell: bash
+        run: |
+          echo "STAGE_DIR=$GITHUB_WORKSPACE/labs_stage" >> "$GITHUB_ENV"
+          echo "Staging will use: $GITHUB_WORKSPACE/labs_stage"
+
+      - name: Prepare tiered labs tree (staging)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Staging path: $STAGE_DIR"
+          rm -rf "$STAGE_DIR"
+          mkdir -p "$STAGE_DIR"/{Beginner_Labs,Intermediate_Labs,Advanced_Labs}
+
+          cp -a "$SRC_BEGINNER"/.      "$STAGE_DIR/Beginner_Labs/"
+          cp -a "$SRC_INTERMEDIATE"/.  "$STAGE_DIR/Intermediate_Labs/"
+          cp -a "$SRC_ADVANCED"/.      "$STAGE_DIR/Advanced_Labs/"
+
+          if [[ -f "$WEB_README" ]]; then
+            cp -a "$WEB_README" "$STAGE_DIR/README.md"
+          else
+            echo "::warning ::No README.md found at $WEB_README"
+          fi
+
+      - name: List staged content (debug)
+        shell: bash
+        run: |
+          echo "== staged tree (dirs) =="
+          find "$STAGE_DIR" -maxdepth 2 -type d -printf "%P\n" | sort
+          echo "== staged files (sample) =="
+          find "$STAGE_DIR" -type f -maxdepth 2 -printf "%P\n" | sort | sed -n '1,50p'
+
+      - name: Probe SFTP port 22 (non-blocking)
+        shell: bash
+        run: |
+          set +e
+          HOST="${{ secrets.SFTP_HOST_PUBLIC }}"
+          echo "Probing $HOST:22 ..."
+          if timeout 10 bash -lc "cat </dev/null >/dev/tcp/$HOST/22"; then
+            echo "✅ Port 22 reachable"
+          else
+            echo "::warning ::Port 22 NOT reachable (will attempt upload anyway)"
+          fi
+
+      - name: Ensure remote /resources/labs exists (best-effort)
+        uses: appleboy/ssh-action@v1.1.0
+        continue-on-error: true
+        with:
+          host:     ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SFTP_USER_PUBLIC }}
+          password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}
+          port: 22
+          script: |
+            mkdir -p "${{ env.REMOTE_BASE }}"
+            ls -ld "${{ env.REMOTE_BASE }}"
+
+      - name: Assert staged dir exists (pre-upload)
+        shell: bash
+        run: |
+          echo "Container expects path relative to /github/workspace:"
+          echo "ls -la ./labs_stage"
+          ls -la ./labs_stage
+
+      - name: Enforce one+ notebook per lab
+        shell: bash
+        run: |
+          set -euo pipefail
+          miss=0
+          while IFS= read -r d; do
+            n=$(find "$d" -maxdepth 1 -type f -name '*.ipynb' | wc -l)
+            if (( n < 1 )); then
+              echo "::error ::$d has no notebooks"
+              miss=$((miss+1))
+            fi
+          done < <(find "$STAGE_DIR" -path '*/resources/notebooks' -type d)
+          (( miss == 0 )) || exit 1
+
+      - name: Remove notebook backups from stage
+        shell: bash
+        run: |
+          find "$STAGE_DIR" -type d \( -name _backup -o -name backup \) -prune -exec rm -rf {} +
+
+      - name: Upload via SFTP (PUBLIC)
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server:   ${{ secrets.SFTP_HOST_PUBLIC }}
+          username: ${{ secrets.SFTP_USER_PUBLIC }}
+          password: ${{ secrets.SFTP_PASSWORD_PUBLIC }}
+          port: 22
+          local_path: labs_stage       # workspace-relative
+          remote_path: ${{ env.REMOTE_BASE }}/
+          sftpArgs: "-o StrictHostKeyChecking=no"
+
+      - name: Verify file reachable (smoke test)
+        shell: bash
+        env:
+          URL: "https://quscitech.com/instructors/QST-INST-2025/resources/hello-ci.html"
+        run: |
+          set -euo pipefail
+          echo "Checking $URL (3 attempts, 2-sec delay)..."
+          for i in {1..3}; do
+            code=$(curl -sS -o /tmp/hello-ci.html -w '%{http_code}' \
+              --retry 3 --retry-delay 2 --fail "$URL" || true)
+            if [[ "$code" == "200" ]]; then
+              echo "✅ Smoke test passed (HTTP 200)"
+              exit 0
+            fi
+            echo "Attempt $i failed (HTTP $code). Retrying in 3 s…"; sleep 3
+          done
+          echo "::error ::Smoke test failed for $URL"
+          exit 1

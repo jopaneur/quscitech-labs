@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>E.2 — Intermediate Labs · QuSciTech™</title>
+  <!-- same CSS shell as e1, with different main content -->
+  <!-- For brevity in your repo, copy the <style> from e1/index.html and reuse it here unchanged. -->
+</head>
+<body>
+  <!-- same header + nav + bookbelt as e1 (copy/paste) -->
+
+  <main id="main" tabindex="-1">
+    <div class="crumb">
+      ← <a href="/labs/labs.html">Back to Labs Overview</a>
+    </div>
+    <h1>E.2 — Intermediate Labs</h1>
+    <p>
+      The E.2 track extends the Beginner labs into quantum communication, information metrics,
+      and variational control. Labs cover BB84 QKD, quantum kernels, fidelity and trace distance,
+      tamper-evident entanglement checks, and VQE toy minimization.
+    </p>
+
+    <section class="cards" aria-label="Intermediate Labs">
+      <!-- E.2.1 -->
+      <article class="card">
+        <div class="badge">E.2.1</div>
+        <h2>E.2.1 — Quantum Kernel SVM vs Logistic Regression</h2>
+        <p>
+          Compare a classical logistic regression classifier with a quantum kernel SVM, highlighting
+          situations where quantum feature spaces offer expressive advantages.
+        </p>
+        <div class="lab-meta">
+          Notebook: <code>E.2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb</code>
+        </div>
+        <div class="cta-row">
+          <a class="btn" href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-quantum-kernel-svm-vs-logregression-lab/resources/notebooks/E.2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb">
+            Open in Colab
+          </a>
+          <a class="btn" href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-quantum-kernel-svm-vs-logregression-lab/resources/notebooks/E.2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb">
+            View on GitHub
+          </a>
+        </div>
+      </article>
+
+      <!-- E.2.2 -->
+      <article class="card">
+        <div class="badge">E.2.2</div>
+        <h2>E.2.2 — ZZ Expectation Scan</h2>
+        <p>
+          Sweep a two-qubit ZZ expectation value across parameterized rotations to reveal
+          interference fringes and control sensitivity.
+        </p>
+        <div class="lab-meta">
+          Notebook: <code>E.2_Lab_2_ZZ_Expectation_Scan.ipynb</code>
+        </div>
+        <div class="cta-row">
+          <a class="btn" href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-zz-expectation-scan-lab/resources/notebooks/E.2_Lab_2_ZZ_Expectation_Scan.ipynb">
+            Open in Colab
+          </a>
+          <a class="btn" href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-zz-expectation-scan-lab/resources/notebooks/E.2_Lab_2_ZZ_Expectation_Scan.ipynb">
+            View on GitHub
+          </a>
+        </div>
+      </article>
+
+      <!-- E.2.3 -->
+      <article class="card">
+        <div class="badge">E.2.3</div>
+        <h2>E.2.3 — BB84 Quantum Key Distribution</h2>
+        <p>
+          Implement the BB84 protocol, simulate eavesdropping, and track QBER to decide when
+          a key is secure or must be discarded.
+        </p>
+        <div class="lab-meta">
+          Notebook: <code>E.2_Lab_3_BB84_QKD.ipynb</code>
+        </div>
+        <div class="cta-row">
+          <a class="btn" href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-BB84-QKD-lab/resources/notebooks/E.2_Lab_3_BB84_QKD.ipynb">
+            Open in Colab
+          </a>
+          <a class="btn" href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-BB84-QKD-lab/resources/notebooks/E.2_Lab_3_BB84_QKD.ipynb">
+            View on GitHub
+          </a>
+        </div>
+      </article>
+
+      <!-- E.2.4 -->
+      <article class="card">
+        <div class="badge">E.2.4</div>
+        <h2>E.2.4 — Fidelity &amp; Trace Distance Metrics</h2>
+        <p>
+          Measure how quantum states respond to perturbations using fidelity and trace distance,
+          connecting geometric intuitions to operational robustness.
+        </p>
+        <div class="lab-meta">
+          Notebook: <code>E.2_Lab_4_Fidelity_Trace_Distance.ipynb</code>
+        </div>
+        <div class="cta-row">
+          <a class="btn" href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-fidelity-trace-distance-lab/resources/notebooks/E.2_Lab_4_Fidelity_Trace_Distance.ipynb">
+            Open in Colab
+          </a>
+          <a class="btn" href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-fidelity-trace-distance-lab/resources/notebooks/E.2_Lab_4_Fidelity_Trace_Distance.ipynb">
+            View on GitHub
+          </a>
+        </div>
+      </article>
+
+      <!-- E.2.5 -->
+      <article class="card">
+        <div class="badge">E.2.5</div>
+        <h2>E.2.5 — Entanglement Tamper Check</h2>
+        <p>
+          Model tamper-evident entanglement sharing and verify when an adversary has disturbed
+          a shared Bell pair.
+        </p>
+        <div class="lab-meta">
+          Notebook: <code>E.2_Lab_5_Entanglement_Tamper_Check.ipynb</code>
+        </div>
+        <div class="cta-row">
+          <a class="btn" href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-entanglement-tamper-check-lab/resources/notebooks/E.2_Lab_5_Entanglement_Tamper_Check.ipynb">
+            Open in Colab
+          </a>
+          <a class="btn" href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-entanglement-tamper-check-lab/resources/notebooks/E.2_Lab_5_Entanglement_Tamper_Check.ipynb">
+            View on GitHub
+          </a>
+        </div>
+      </article>
+
+      <!-- E.2.6 -->
+      <article class="card">
+        <div class="badge">E.2.6</div>
+        <h2>E.2.6 — VQE Toy Minimization under Noise</h2>
+        <p>
+          Explore how a simple VQE loop converges, then stress it under simulated noise to see
+          when mitigation strategies become necessary.
+        </p>
+        <div class="lab-meta">
+          Notebook: <code>E.2_Lab_6_VQE_Toy_Minimization.ipynb</code>
+        </div>
+        <div class="cta-row">
+          <a class="btn" href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-VQE-Toy-Minimization-lab/resources/notebooks/E.2_Lab_6_VQE_Toy_Minimization.ipynb">
+            Open in Colab
+          </a>
+          <a class="btn" href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-VQE-Toy-Minimization-lab/resources/notebooks/E.2_Lab_6_VQE_Toy_Minimization.ipynb">
+            View on GitHub
+          </a>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <!-- same footer + script as e1 -->
+</body>
+</html>

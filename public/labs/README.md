@@ -1,7 +1,7 @@
-# QAIS Angle Encoding & Statevectors Lab (E1.3)
+# QAIS Angle Encoding and Statevectors Lab (E1.3)
 
 ## Overview
-This lab introduces **angle encoding** — a foundational quantum data encoding technique  
+This lab introduces **angle encoding** — a foundational quantum data encoding technique
 used to map classical information into the amplitudes of quantum statevectors.
 
 ## Learners explore:
@@ -10,15 +10,15 @@ used to map classical information into the amplitudes of quantum statevectors.
 - Visualization of **statevectors** and amplitude distributions.
 
 ## Learning Goals
-1. Understand angle-based quantum feature mapping.  
-2. Visualize statevector transformations under parameterized rotations.  
+1. Understand angle-based quantum feature mapping.
+2. Visualize statevector transformations under parameterized rotations.
 3. Connect geometric quantum states to linear algebraic formulations.
 
 ## Tier
 🟨 **Intermediate-Level Public Lab**
 
 ## NoCode Variant
-This “NoCode” version uses precomputed results and interactive graphics rather than  
+This “NoCode” version uses precomputed results and interactive graphics rather than
 requiring live quantum simulation.
 
 ## Files & Resources
@@ -35,5 +35,5 @@ This lab is published via **public-deploy.yml** under:
 
 
 ## QAIS Pedagogical Context
-Part of the *Quantum AI Systems* curriculum, illustrating **encoding → state evolution**  
+Part of the *Quantum AI Systems* curriculum, illustrating **encoding → state evolution**
 as the foundation of CRQC–LLM and QALIS state-space architectures.

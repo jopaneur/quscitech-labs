@@ -25,7 +25,7 @@ jobs:
       SFTP_ROOT: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}
 
       # Final target: /home/quscitech/public_html/instructors/QST-INST-2025/resources/labs
-      REMOTE_BASE: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}labs
+      REMOTE_BASE: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}/labs
 
       SMOKE_URL: "https://quscitech.com/instructors/QST-INST-2025/resources/hello-ci.html"
 

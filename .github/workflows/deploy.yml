@@ -20,7 +20,13 @@ jobs:
       SRC_INTERMEDIATE: public/labs/Intermediate_Labs
       SRC_ADVANCED: public/labs/Advanced_Labs
       WEB_README: public/labs/README.md
-      REMOTE_BASE: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}/labs
+
+      # Root on the server (already set to /home/quscitech/public_html/instructors/QST-INST-2025/resources/)
+      SFTP_ROOT: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}
+
+      # Final target: /home/quscitech/public_html/instructors/QST-INST-2025/resources/labs
+      REMOTE_BASE: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}labs
+
       SMOKE_URL: "https://quscitech.com/instructors/QST-INST-2025/resources/hello-ci.html"
 
     steps:
@@ -39,26 +45,45 @@ jobs:
         run: |
           set -euo pipefail
           echo "Staging path: $STAGE_DIR"
+
+          # Clean stage
           rm -rf "$STAGE_DIR"
-          mkdir -p "$STAGE_DIR"/{Beginner_Labs,Intermediate_Labs,Advanced_Labs}
+          mkdir -p "$STAGE_DIR"
 
-          cp -a "$SRC_BEGINNER"/.      "$STAGE_DIR/Beginner_Labs/"
-          cp -a "$SRC_INTERMEDIATE"/.  "$STAGE_DIR/Intermediate_Labs/"
-          cp -a "$SRC_ADVANCED"/.      "$STAGE_DIR/Advanced_Labs/"
+          # Copy the three lab tracks
+          cp -R "$SRC_BEGINNER"     "$STAGE_DIR/Beginner_Labs"
+          cp -R "$SRC_INTERMEDIATE" "$STAGE_DIR/Intermediate_Labs"
+          cp -R "$SRC_ADVANCED"     "$STAGE_DIR/Advanced_Labs"
 
+          # Shared README
           if [[ -f "$WEB_README" ]]; then
-            cp -a "$WEB_README" "$STAGE_DIR/README.md"
+            cp "$WEB_README" "$STAGE_DIR/README.md"
           else
             echo "::warning ::No README.md found at $WEB_README"
           fi
+
+          # ---------- NEW: portal shell + QR assets + track entry pages ----------
+
+          # Top-level labs portal entry points
+          cp public/labs/labs.html  "$STAGE_DIR/labs.html"
+          cp public/labs/index.html "$STAGE_DIR/index.html"
+
+          # Track landing pages (E.1 / E.2 / E.3)
+          cp -R public/labs/e1 "$STAGE_DIR/e1"
+          cp -R public/labs/e2 "$STAGE_DIR/e2"
+          cp -R public/labs/e3 "$STAGE_DIR/e3"
+
+          # QR code assets
+          cp -R public/labs/assets "$STAGE_DIR/assets"
 
       - name: "🔎 List staged content (debug)"
         shell: bash
         run: |
           echo "== staged tree (dirs) =="
           find "$STAGE_DIR" -maxdepth 2 -type d -printf "%P\n" | sort
+
           echo "== staged files (sample) =="
-          find "$STAGE_DIR" -type f -maxdepth 2 -printf "%P\n" | sort | sed -n '1,50p'
+          find "$STAGE_DIR" -maxdepth 3 -type f -printf "%P\n" | sort | sed -n '1,80p'
 
       - name: "🧪 Enforce one+ notebook per lab"
         shell: bash
@@ -94,9 +119,6 @@ jobs:
           chmod 600 /tmp/deploy_key
           command -v ssh >/dev/null 2>&1 || sudo apt-get update -y && sudo apt-get install -y openssh-client
 
-      # -------------------------------------------------------------------
-      # FIXED: Ensure remote public labs directory exists + echo path
-      # -------------------------------------------------------------------
       - name: "🏗️ Ensure remote public labs directory exists"
         shell: bash
         env:
@@ -108,9 +130,6 @@ jobs:
           ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no "${U}@${H}" \
             "mkdir -p '${REMOTE_BASE}' && ls -ld '${REMOTE_BASE}'"
 
-      # -------------------------------------------------------------------
-      # FIXED: Clean, simple scp target (no nested quotes)
-      # -------------------------------------------------------------------
       - name: "📤 Upload staged labs (scp, key-based)"
         shell: bash
         env:

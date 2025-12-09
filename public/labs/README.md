@@ -37,3 +37,4 @@ This lab is published via **public-deploy.yml** under:
 ## QAIS Pedagogical Context
 Part of the *Quantum AI Systems* curriculum, illustrating **encoding → state evolution**
 as the foundation of CRQC–LLM and QALIS state-space architectures.
+## QAIS Pedagogical Context

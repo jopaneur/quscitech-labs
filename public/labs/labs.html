@@ -1,249 +1,421 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
+  <title>QuSciTech Labs — Web-Ready Learning Layout</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>QuSciTech Labs — Track Overview (E.1 / E.2 / E.3) · QuSciTech™</title>
+  <meta name="description"
+        content="Web-ready quantum AI labs for Quantum AI Systems: Theory, Architecture, and Applications. Beginner, Intermediate, and Advanced tracks with Colab workflows and IBM Quantum backends." />
+
+  <!-- Base theme: dark background, orange highlights -->
   <style>
-    :root{ --qs-blue:#002244; --qs-amber:#ffa149; --qs-bg:#0b0f14; --qs-ink:#eef2f6; }
-    *{ box-sizing:border-box; margin:0; padding:0 }
-    body{ font-family:Arial,Helvetica,sans-serif; background:var(--qs-bg); color:var(--qs-ink); line-height:1.6 }
-
-    /* Header (brand first line, nav second line) */
-    header{
-      position:fixed; inset:0 0 auto 0; z-index:1000;
-      display:flex; flex-direction:column; gap:10px;
-      background:var(--qs-blue); color:#fff;
-      padding:16px 24px;
-      box-shadow:0 2px 8px rgba(0,0,0,.4);
-      transition:all .3s ease-in-out;
+    :root {
+      --qst-bg: #05080d;
+      --qst-bg-alt: #0b1119;
+      --qst-panel: #111824;
+      --qst-panel-alt: #151e2b;
+      --qst-border-soft: #263244;
+      --qst-text-main: #f7fafc;
+      --qst-text-muted: #c3ccd9;
+      --qst-accent: #ff9c3b;
+      --qst-accent-soft: rgba(255, 156, 59, 0.12);
+      --qst-pill-bg: #1b2533;
+      --qst-link: #90cdf4;
+      --qst-link-hover: #bee3f8;
     }
-    header.shrink{ padding:10px 18px; background:rgba(0,34,68,.95); backdrop-filter:blur(6px) }
 
-    .logo{
-      display:block; width:100%; text-align:left; white-space:nowrap;
-      color:var(--qs-amber); text-decoration:none; font-weight:bold; font-size:1.6rem; line-height:1.2;
+    * {
+      box-sizing: border-box;
     }
-    .logo sup{ font-size:.6em; vertical-align:top }
-    .logo:hover{ color:#ffb766 }
 
-    nav[aria-label="Primary"]{ display:flex; gap:12px; flex-wrap:wrap; align-items:center }
-    nav[aria-label="Primary"] a{ color:#fff; text-decoration:none; font-size:.95rem; transition:color .2s }
-    nav[aria-label="Primary"] a:hover{ color:var(--qs-amber) }
-
-    /* Reviewers dropdown */
-    .menu{ position:relative }
-    .menu > a::after{ content:"▾"; margin-left:6px; font-size:.8em }
-    .submenu{
-      position:absolute; top:100%; left:0; min-width:260px;
-      background:#0f1e33; border:1px solid rgba(255,255,255,.12);
-      border-radius:8px; padding:6px 0; display:none; box-shadow:0 10px 24px rgba(0,0,0,.35);
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: var(--qst-bg);
+      color: var(--qst-text-main);
+      -webkit-font-smoothing: antialiased;
     }
-    .submenu a{ display:block; padding:10px 12px; font-size:.92rem; color:#e7efff; text-decoration:none }
-    .submenu a:hover{ background:rgba(255,255,255,.08); color:var(--qs-amber) }
-    .menu:hover .submenu, .menu:focus-within .submenu{ display:block }
 
-    /* Bookbelt */
-    .bookbelt{
-      position:fixed; top:88px; left:0; right:0; z-index:999;
-      background:#0e1c2b; color:#cfe2ff; text-align:center;
-      padding:8px 10px; border-top:1px solid rgba(255,255,255,.08); border-bottom:1px solid rgba(255,255,255,.08);
-      transition:top .3s ease-in-out;
+    a {
+      color: var(--qst-link);
+      text-decoration: none;
     }
-    header.shrink + .bookbelt{ top:70px }
-    .bookbelt strong{ color:#fff } .bookbelt em{ color:#ffd9a6; font-style:normal }
-
-    /* Layout */
-    main{ max-width:1100px; margin:136px auto 80px; padding:0 20px }
-    h1{ color:var(--qs-amber); font-size:1.9rem; margin:10px 0 16px }
-    h2{ color:#d7e6ff; font-size:1.2rem; margin:16px 0 10px }
-    p{ margin-bottom:12px; text-align:left }
-
-    .cards{ display:grid; gap:18px }
-    .card{
-      background:#0f1722; border:1px solid rgba(255,255,255,.09);
-      border-radius:10px; padding:18px; margin:4px 0;
+    a:hover {
+      color: var(--qst-link-hover);
+      text-decoration: underline;
     }
-    .card h2{ margin-top:0 }
-    .badge{ display:inline-block; font-size:.8rem; padding:3px 8px; border-radius:999px;
-            background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.16); margin-bottom:6px; }
-    .cta-row{ margin-top:10px; display:flex; flex-wrap:wrap; gap:8px }
-    .btn{
-      display:inline-block; padding:6px 12px; border-radius:999px; font-size:.9rem;
-      border:1px solid rgba(255,255,255,.25); text-decoration:none; color:#e2ecff;
-      background:rgba(255,255,255,.03); cursor:pointer;
-    }
-    .btn:hover{ border-color:var(--qs-amber); color:var(--qs-amber); background:rgba(255,255,255,.06) }
 
-    .qr-strip{
-      margin-top:26px; padding-top:18px; border-top:1px solid rgba(255,255,255,.12);
+    /* Top nav bar (match main site) */
+    .qst-nav {
+      background: #07101c;
+      border-bottom: 1px solid #111827;
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
-    .qr-grid{
-      display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start;
-      margin-top:12px;
+
+    .qst-nav-left {
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
     }
-    .qr-block img{ display:block; width:120px; height:120px }
-    .qr-caption{ font-size:.86rem; margin-top:6px; max-width:180px }
 
-    .meta{ font-size:.9rem; color:#cbd5e1 }
-
-    footer{
-      text-align:center; font-size:.9rem; color:#cbd5e1;
-      border-top:1px solid rgba(255,255,255,.1); padding:20px; background:var(--qs-blue)
+    .qst-logo {
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: #ffb347;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
     }
-    footer a{ color:var(--qs-amber); text-decoration:none }
-    footer a:hover{ text-decoration:underline }
 
-    @media (max-width:768px){
-      .logo{ font-size:1.45rem }
-      .bookbelt{ top:92px }
-      header.shrink + .bookbelt{ top:74px }
-      main{ margin-top:142px }
-      .qr-grid{ justify-content:flex-start }
+    .qst-nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .qst-nav-links a {
+      color: #e2e8f0;
+      text-decoration: none;
+    }
+    .qst-nav-links a:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+
+    .qst-bookbelt {
+      text-align: center;
+      font-size: 0.85rem;
+      padding: 0.5rem 1rem;
+      background: #050a12;
+      border-bottom: 1px solid #111827;
+      color: #e2e8f0;
+    }
+
+    .qst-bookbelt span {
+      font-weight: 600;
+    }
+
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 2.25rem 1.25rem 3rem;
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      margin: 0 0 1.25rem;
+      color: var(--qst-accent);
+    }
+
+    h2 {
+      font-size: 1.3rem;
+      margin: 0 0 0.4rem;
+    }
+
+    p {
+      margin: 0.3rem 0;
+      color: var(--qst-text-muted);
+      line-height: 1.55;
+    }
+
+    .qst-intro {
+      margin-bottom: 1.75rem;
+      font-size: 0.98rem;
+    }
+
+    .qst-track-card {
+      background: radial-gradient(circle at top left,
+        rgba(255, 156, 59, 0.08),
+        transparent 55%)
+        , var(--qst-panel);
+      border-radius: 14px;
+      padding: 1.5rem 1.6rem;
+      border: 1px solid var(--qst-border-soft);
+      margin-bottom: 1.2rem;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+    }
+
+    .qst-track-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.2rem 0.7rem;
+      border-radius: 999px;
+      background: var(--qst-pill-bg);
+      color: var(--qst-text-muted);
+      font-size: 0.72rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .qst-pill-count {
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      background: #1f2933;
+      font-size: 0.7rem;
+      color: #e5e7eb;
+    }
+
+    .qst-track-footer {
+      margin-top: 0.9rem;
+    }
+
+    .qst-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 156, 59, 0.45);
+      background: var(--qst-accent-soft);
+      color: var(--qst-accent);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .qst-cta:hover {
+      background: rgba(255, 156, 59, 0.2);
+      text-decoration: none;
+      color: #ffd7a0;
+    }
+
+    .qst-arrow {
+      font-size: 0.9rem;
+    }
+
+    /* QR strip */
+    .qst-qr-section {
+      margin-top: 2.25rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #1f2933;
+    }
+
+    .qst-qr-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .qst-qr-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.75rem 0.9rem 0.9rem;
+      border-radius: 12px;
+      background: var(--qst-panel-alt);
+      border: 1px solid #2a384c;
+      min-width: 170px;
+    }
+
+    .qst-qr-img-wrap {
+      background: #ffffff;
+      padding: 0.35rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    }
+
+    .qst-qr-img-wrap img {
+      display: block;
+      width: 96px;
+      height: 96px;
+    }
+
+    .qst-qr-label-main {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--qst-text-main);
+    }
+
+    .qst-qr-label-sub {
+      font-size: 0.75rem;
+      color: var(--qst-text-muted);
+    }
+
+    footer {
+      border-top: 1px solid #111827;
+      padding: 1.25rem 1.5rem 1.75rem;
+      background: #050a12;
+      font-size: 0.78rem;
+      color: #9ca3af;
+      text-align: center;
+    }
+
+    @media (max-width: 720px) {
+      main {
+        padding: 1.6rem 1rem 2.5rem;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+      .qst-track-card {
+        padding: 1.25rem 1.25rem 1.3rem;
+      }
+      .qst-qr-grid {
+        flex-direction: column;
+      }
+      .qst-qr-tile {
+        align-items: flex-start;
+      }
+      .qst-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
+      }
     }
   </style>
 </head>
 <body>
-  <header id="site-header">
-    <a class="logo" href="https://quscitech.com">QuSciTech<sup>™</sup></a>
-    <nav aria-label="Primary">
-      <a href="/welcome.html">Welcome</a>
-      <a href="/about.html">About</a>
-      <a href="/contents.html">What’s inside</a>
-      <a href="/labs/labs.html">Labs</a>
-      <a href="/instructors.html">Instructor</a>
-      <a href="/press.html">Press</a>
-
-      <div class="menu" aria-label="Reviewers">
-        <a href="/reviews.html" aria-haspopup="true" aria-expanded="false">Reviewers</a>
-        <div class="submenu" aria-label="Reviewers menu">
-          <a href="/reviews.html#general">General Reviewers</a>
-          <a href="/reviewers/index.html">Peer Reviewers</a>
-        </div>
+  <!-- Shared header -->
+  <header>
+    <div class="qst-nav">
+      <div class="qst-nav-left">
+        <div class="qst-logo">QuSciTech™</div>
+        <nav class="qst-nav-links">
+          <a href="/index.html">Welcome</a>
+          <a href="/about.html">About</a>
+          <a href="/whats-inside.html">What’s inside</a>
+          <a href="/labs.html">Labs</a>
+          <a href="/instructors.html">Instructor</a>
+          <a href="/press.html">Press</a>
+          <a href="/reviewers.html">Reviewers</a>
+          <a href="/doi.html">DOI</a>
+          <a href="/contact.html">Contact</a>
+          <a href="/purchase.html">Purchase Quantum Book</a>
+        </nav>
       </div>
-
-      <a href="/doi.html">DOI</a>
-      <a href="/contact.html">Contact</a>
-      <a href="/buy.html">Purchase Quantum Book</a>
-    </nav>
+    </div>
+    <div class="qst-bookbelt">
+      <span>Quantum AI Systems:</span> Theory, Architecture, and Applications
+    </div>
   </header>
 
-  <div class="bookbelt" role="region" aria-label="Book Title">
-    <strong>Quantum AI Systems</strong>: <em>Theory, Architecture, and Applications</em>
-  </div>
+  <main>
+    <h1>QuSciTech Labs — Web-Ready Learning Layout</h1>
 
-  <main id="main" tabindex="-1">
-    <h1>QuSciTech Labs — Track Overview (E.1 / E.2 / E.3)</h1>
-    <p>
-      This portal provides access to the E.1 (Beginner), E.2 (Intermediate), and E.3 (Advanced) tracks
-      that accompany <em>Quantum AI Systems: Theory, Architecture, and Applications</em>.
-      Each track links to a track-level landing page with Colab badges, GitHub links, and DOI-aligned guidance.
-    </p>
+    <div class="qst-intro">
+      <p>
+        This hub organizes the deployed
+        <strong>Quantum AI Systems (QAIS)</strong> laboratory modules into three
+        tracks that mirror <strong>Appendix&nbsp;E</strong> of the book.
+        All public labs here use <strong>no-code</strong> Colab workflows and
+        IBM Quantum backends via Qiskit.
+      </p>
+    </div>
 
-    <section class="cards" aria-label="Lab Tracks">
-      <article class="card">
-        <div class="badge">Track E.1 · Beginner</div>
-        <h2>E.1 — Foundational Quantum Concepts</h2>
-        <p>
-          Focuses on single-qubit superposition, entanglement, angle encoding, circuit depth vs. noise,
-          and the quantum teleportation protocol. Ideal for readers encountering quantum states,
-          measurement, and circuits for the first time.
-        </p>
-        <p class="meta">
-          Includes 5 no-code labs with guided narratives, figures, and pre-wired Qiskit code for
-          Google Colab and IBM Quantum backends.
-        </p>
-        <div class="cta-row">
-          <a class="btn" href="/labs/e1/">Open E.1 Track →</a>
-        </div>
-      </article>
-
-      <article class="card">
-        <div class="badge">Track E.2 · Intermediate</div>
-        <h2>E.2 — Communication, Metrics &amp; Variational Control</h2>
-        <p>
-          Extends E.1 concepts into BB84 quantum key distribution, tamper-evident entanglement checks,
-          quantum kernel methods, expectation scans, fidelity metrics, and VQE toy minimization.
-        </p>
-        <p class="meta">
-          Includes 6 labs designed for readers who are comfortable with basic quantum circuits and
-          want to explore QAIS-relevant metrics and control.
-        </p>
-        <div class="cta-row">
-          <a class="btn" href="/labs/e2/">Open E.2 Track →</a>
-        </div>
-      </article>
-
-      <article class="card">
-        <div class="badge">Track E.3 · Advanced</div>
-        <h2>E.3 — Full QAIS Pipelines &amp; Case Study Stress Tests</h2>
-        <p>
-          Integrates Bloch-sphere control, Bell tests, density-matrix encodings, hybrid quantum–classical
-          pipelines, Grover search robustness, and the QALIS vs. CRQC–LLM resilience case study.
-        </p>
-        <p class="meta">
-          Includes 7 labs geared toward advanced readers, instructors, and reviewers examining full QAIS
-          behavior under noise, interference, and architectural stress.
-        </p>
-        <div class="cta-row">
-          <a class="btn" href="/labs/e3/">Open E.3 Track →</a>
-        </div>
-      </article>
+    <!-- Track E.1 -->
+    <section class="qst-track-card">
+      <div class="qst-track-tag">
+        E.1 — Beginner Labs
+        <span class="qst-pill-count">5 labs</span>
+      </div>
+      <h2>E.1 — Beginner Labs</h2>
+      <p>
+        Foundational concepts: single-qubit superposition, entanglement,
+        measurement collapse, depth vs. decoherence, and end-to-end
+        teleportation. Built as guided, no-code exercises.
+      </p>
+      <div class="qst-track-footer">
+        <a class="qst-cta" href="e1/">
+          <span>Open E.1 track</span><span class="qst-arrow">→</span>
+        </a>
+      </div>
     </section>
 
-    <section class="qr-strip" aria-label="QR Access">
-      <h2>QR Access (for print readers)</h2>
+    <!-- Track E.2 -->
+    <section class="qst-track-card">
+      <div class="qst-track-tag">
+        E.2 — Intermediate Labs
+        <span class="qst-pill-count">6 labs</span>
+      </div>
+      <h2>E.2 — Intermediate Labs</h2>
       <p>
-        Print readers can jump directly into the online labs by scanning the QR codes below. Each code
-        resolves to a stable URL hosted at <strong>quscitech.com</strong>.
+        Intermediate QAIS workflows: quantum kernels, ZZ expectation scans,
+        BB84 QKD, fidelity/trace-distance metrics, entanglement tamper checks,
+        and VQE toy minimization.
+      </p>
+      <div class="qst-track-footer">
+        <a class="qst-cta" href="e2/">
+          <span>Open E.2 track</span><span class="qst-arrow">→</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Track E.3 -->
+    <section class="qst-track-card">
+      <div class="qst-track-tag">
+        E.3 — Advanced Labs
+        <span class="qst-pill-count">7 labs</span>
+      </div>
+      <h2>E.3 — Advanced Labs</h2>
+      <p>
+        Advanced pipelines: Bloch-sphere control, CHSH correlation sweeps,
+        density-matrix encodings, hybrid QAIS pipelines, Grover search under
+        noise, and the QALIS vs. CRQC–LLM stress-test.
+      </p>
+      <div class="qst-track-footer">
+        <a class="qst-cta" href="e3/">
+          <span>Open E.3 track</span><span class="qst-arrow">→</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- QR codes -->
+    <section class="qst-qr-section">
+      <h2>Scan for quick access</h2>
+      <p>
+        Print readers can scan these codes to jump directly into the online
+        labs portal, the beginner track, or the concept DOI.
       </p>
 
-      <div class="qr-grid">
-        <div class="qr-block">
-          <img src="assets/qr-labs-portal.svg" alt="Scan to open Labs portal" loading="lazy" />
-          <div class="qr-caption">
-            Scan to open Labs portal<br />
-            <code>quscitech.com/labs</code>
+      <div class="qst-qr-grid">
+        <div class="qst-qr-tile">
+          <div class="qst-qr-img-wrap">
+            <img src="assets/qr-labs-portal.svg"
+                 alt="QR code linking to QuSciTech labs portal" />
+          </div>
+          <div class="qst-qr-label-main">Labs portal · quscitech.com/labs</div>
+          <div class="qst-qr-label-sub">
+            Resolves to this web-ready layout.
           </div>
         </div>
 
-        <div class="qr-block">
-          <img src="assets/qr-labs-e1.svg" alt="Scan to open Beginner labs (E.1)" loading="lazy" />
-          <div class="qr-caption">
-            Scan to open Beginner labs (E.1)<br />
-            <code>/labs/e1/</code>
+        <div class="qst-qr-tile">
+          <div class="qst-qr-img-wrap">
+            <img src="assets/qr-labs-e1.svg"
+                 alt="QR code linking to Beginner labs track E.1" />
+          </div>
+          <div class="qst-qr-label-main">E.1 Beginner track</div>
+          <div class="qst-qr-label-sub">
+            Direct link to the E.1 track landing page.
           </div>
         </div>
 
-        <div class="qr-block">
-          <img src="assets/qr-labs-doi.svg" alt="Scan for DOI portal (Zenodo concept record)" loading="lazy" />
-          <div class="qr-caption">
-            Scan for DOI portal<br />
-            Concept DOI <code>10.5281/zenodo.17212825</code>
+        <div class="qst-qr-tile">
+          <div class="qst-qr-img-wrap">
+            <img src="assets/qr-labs-doi.svg"
+                 alt="QR code linking to concept DOI portal" />
+          </div>
+          <div class="qst-qr-label-main">Concept DOI portal</div>
+          <div class="qst-qr-label-sub">
+            DOI record · 10.5281/zenodo.17212825
           </div>
         </div>
       </div>
-
-      <p class="meta" style="margin-top:14px;">
-        For a persistent, citable entry point to the full QuantumAI-Labs collection, use the concept DOI:
-        <a href="https://doi.org/10.5281/zenodo.17212825">10.5281/zenodo.17212825</a>.
-      </p>
     </section>
   </main>
 
-  <footer role="contentinfo">
-    © 2025 Dr. Joe Wilson — All Rights Reserved. ·
-    DOI: <a href="https://doi.org/10.5281/zenodo.17212825">10.5281/zenodo.17212825</a> ·
-    <a href="/sitemap.xml">Sitemap</a>
+  <footer>
+    QuSciTech Press · Companion labs for
+    <em>Quantum AI Systems: Theory, Architecture, and Applications</em>.
   </footer>
-
-  <script>
-    const header=document.getElementById('site-header');
-    window.addEventListener('scroll',()=>{
-      if(window.scrollY>60) header.classList.add('shrink');
-      else header.classList.remove('shrink');
-    },{passive:true});
-  </script>
 </body>
 </html>
-

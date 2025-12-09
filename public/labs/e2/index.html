@@ -1,155 +1,498 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
+  <title>E.2 — Intermediate Labs · QuSciTech Labs</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>E.2 — Intermediate Labs · QuSciTech™</title>
-  <!-- same CSS shell as e1, with different main content -->
-  <!-- For brevity in your repo, copy the <style> from e1/index.html and reuse it here unchanged. -->
+  <meta name="description"
+        content="Intermediate quantum AI labs for Quantum AI Systems: Theory, Architecture, and Applications. Quantum kernels, ZZ expectation scans, BB84 QKD, fidelity metrics, entanglement tamper checks, and VQE toy minimization." />
+
+  <!-- Same shell + theme as labs.html -->
+  <style>
+    :root {
+      --qst-bg: #05080d;
+      --qst-bg-alt: #0b1119;
+      --qst-panel: #111824;
+      --qst-panel-alt: #151e2b;
+      --qst-border-soft: #263244;
+      --qst-text-main: #f7fafc;
+      --qst-text-muted: #c3ccd9;
+      --qst-accent: #ff9c3b;
+      --qst-accent-soft: rgba(255, 156, 59, 0.12);
+      --qst-pill-bg: #1b2533;
+      --qst-link: #90cdf4;
+      --qst-link-hover: #bee3f8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: var(--qst-bg);
+      color: var(--qst-text-main);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: var(--qst-link);
+      text-decoration: none;
+    }
+    a:hover {
+      color: var(--qst-link-hover);
+      text-decoration: underline;
+    }
+
+    .qst-nav {
+      background: #07101c;
+      border-bottom: 1px solid #111827;
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .qst-nav-left {
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+    }
+
+    .qst-logo {
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: #ffb347;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    .qst-nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .qst-nav-links a {
+      color: #e2e8f0;
+    }
+    .qst-nav-links a:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+
+    .qst-bookbelt {
+      text-align: center;
+      font-size: 0.85rem;
+      padding: 0.5rem 1rem;
+      background: #050a12;
+      border-bottom: 1px solid #111827;
+      color: #e2e8f0;
+    }
+
+    .qst-bookbelt span {
+      font-weight: 600;
+    }
+
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin: 0 0 0.6rem;
+      color: var(--qst-accent);
+    }
+
+    h2 {
+      font-size: 1.22rem;
+      margin: 0 0 0.35rem;
+    }
+
+    p {
+      margin: 0.3rem 0;
+      color: var(--qst-text-muted);
+      line-height: 1.55;
+    }
+
+    .qst-back-link {
+      font-size: 0.85rem;
+      margin-bottom: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      color: var(--qst-text-muted);
+    }
+
+    .qst-back-link span {
+      font-size: 0.95rem;
+    }
+
+    .qst-lab-grid {
+      margin-top: 1.5rem;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1rem;
+    }
+
+    .qst-lab-card {
+      background: var(--qst-panel);
+      border-radius: 14px;
+      padding: 1.1rem 1.3rem 1.15rem;
+      border: 1px solid var(--qst-border-soft);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+    }
+
+    .qst-lab-tag {
+      display: inline-block;
+      font-size: 0.78rem;
+      color: var(--qst-text-muted);
+      margin-bottom: 0.15rem;
+    }
+
+    .qst-lab-title {
+      font-weight: 600;
+      color: var(--qst-text-main);
+      margin-bottom: 0.3rem;
+    }
+
+    .qst-lab-footer {
+      margin-top: 0.65rem;
+      font-size: 0.85rem;
+    }
+
+    .qst-pill-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 156, 59, 0.5);
+      font-size: 0.78rem;
+      margin-right: 0.45rem;
+      background: var(--qst-accent-soft);
+      color: var(--qst-accent);
+      text-decoration: none;
+    }
+
+    .qst-pill-link:hover {
+      background: rgba(255, 156, 59, 0.22);
+      text-decoration: none;
+      color: #ffd7a0;
+    }
+
+    .qst-notebook-path {
+      font-size: 0.78rem;
+      color: #9ca3af;
+      margin-top: 0.35rem;
+      word-break: break-all;
+    }
+
+    .qst-qr-section {
+      margin-top: 2rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid #1f2933;
+    }
+
+    .qst-qr-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .qst-qr-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.75rem 0.9rem 0.9rem;
+      border-radius: 12px;
+      background: var(--qst-panel-alt);
+      border: 1px solid #2a384c;
+      min-width: 170px;
+    }
+
+    .qst-qr-img-wrap {
+      background: #ffffff;
+      padding: 0.35rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    }
+
+    .qst-qr-img-wrap img {
+      display: block;
+      width: 96px;
+      height: 96px;
+    }
+
+    .qst-qr-label-main {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--qst-text-main);
+    }
+
+    .qst-qr-label-sub {
+      font-size: 0.75rem;
+      color: var(--qst-text-muted);
+    }
+
+    footer {
+      border-top: 1px solid #111827;
+      padding: 1.25rem 1.5rem 1.75rem;
+      background: #050a12;
+      font-size: 0.78rem;
+      color: #9ca3af;
+      text-align: center;
+    }
+
+    @media (max-width: 720px) {
+      main {
+        padding: 1.6rem 1rem 2.5rem;
+      }
+      h1 {
+        font-size: 1.55rem;
+      }
+      .qst-lab-card {
+        padding: 1rem 1rem 1.05rem;
+      }
+      .qst-qr-grid {
+        flex-direction: column;
+      }
+      .qst-qr-tile {
+        align-items: flex-start;
+      }
+      .qst-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
+      }
+    }
+  </style>
 </head>
 <body>
-  <!-- same header + nav + bookbelt as e1 (copy/paste) -->
-
-  <main id="main" tabindex="-1">
-    <div class="crumb">
-      ← <a href="/labs/labs.html">Back to Labs Overview</a>
+  <header>
+    <div class="qst-nav">
+      <div class="qst-nav-left">
+        <div class="qst-logo">QuSciTech™</div>
+        <nav class="qst-nav-links">
+          <a href="/index.html">Welcome</a>
+          <a href="/about.html">About</a>
+          <a href="/whats-inside.html">What’s inside</a>
+          <a href="/labs.html">Labs</a>
+          <a href="/instructors.html">Instructor</a>
+          <a href="/press.html">Press</a>
+          <a href="/reviewers.html">Reviewers</a>
+          <a href="/doi.html">DOI</a>
+          <a href="/contact.html">Contact</a>
+          <a href="/purchase.html">Purchase Quantum Book</a>
+        </nav>
+      </div>
     </div>
+    <div class="qst-bookbelt">
+      <span>Quantum AI Systems:</span> Theory, Architecture, and Applications
+    </div>
+  </header>
+
+  <main>
+    <a class="qst-back-link" href="../">
+      <span>←</span> Back to Labs Overview
+    </a>
+
     <h1>E.2 — Intermediate Labs</h1>
     <p>
-      The E.2 track extends the Beginner labs into quantum communication, information metrics,
-      and variational control. Labs cover BB84 QKD, quantum kernels, fidelity and trace distance,
-      tamper-evident entanglement checks, and VQE toy minimization.
+      These labs support the Intermediate track (E.2) described in Appendix E
+      of <em>Quantum AI Systems: Theory, Architecture, and Applications</em>.
+      They extend the Beginner labs into quantum communication, information
+      metrics, and variational control.
     </p>
 
-    <section class="cards" aria-label="Intermediate Labs">
+    <div class="qst-lab-grid">
       <!-- E.2.1 -->
-      <article class="card">
-        <div class="badge">E.2.1</div>
-        <h2>E.2.1 — Quantum Kernel SVM vs Logistic Regression</h2>
-        <p>
-          Compare a classical logistic regression classifier with a quantum kernel SVM, highlighting
-          situations where quantum feature spaces offer expressive advantages.
-        </p>
-        <div class="lab-meta">
-          Notebook: <code>E.2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb</code>
+      <article class="qst-lab-card">
+        <div class="qst-lab-tag">E.2.1</div>
+        <div class="qst-lab-title">
+          E.2.1 — Quantum Kernel: SVM vs Logistic Regression
         </div>
-        <div class="cta-row">
-          <a class="btn" href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-quantum-kernel-svm-vs-logregression-lab/resources/notebooks/E.2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb">
+        <p>
+          Compare a classical logistic regression classifier with a quantum
+          kernel SVM, highlighting situations where quantum feature spaces
+          offer expressive advantages.
+        </p>
+        <div class="qst-lab-footer">
+          <a class="qst-pill-link"
+             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb">
             Open in Colab
           </a>
-          <a class="btn" href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-quantum-kernel-svm-vs-logregression-lab/resources/notebooks/E.2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb">
+          <a class="qst-pill-link"
+             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb">
             View on GitHub
           </a>
+          <div class="qst-notebook-path">
+            Notebook: E_2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb
+          </div>
         </div>
       </article>
 
       <!-- E.2.2 -->
-      <article class="card">
-        <div class="badge">E.2.2</div>
-        <h2>E.2.2 — ZZ Expectation Scan</h2>
+      <article class="qst-lab-card">
+        <div class="qst-lab-tag">E.2.2</div>
+        <div class="qst-lab-title">E.2.2 — ZZ Expectation Scan</div>
         <p>
-          Sweep a two-qubit ZZ expectation value across parameterized rotations to reveal
-          interference fringes and control sensitivity.
+          Explore the expectation value landscape for ZZ interactions under
+          different variational parameters, linking circuit structure to
+          observable behavior.
         </p>
-        <div class="lab-meta">
-          Notebook: <code>E.2_Lab_2_ZZ_Expectation_Scan.ipynb</code>
-        </div>
-        <div class="cta-row">
-          <a class="btn" href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-zz-expectation-scan-lab/resources/notebooks/E.2_Lab_2_ZZ_Expectation_Scan.ipynb">
+        <div class="qst-lab-footer">
+          <a class="qst-pill-link"
+             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_2_ZZ_Expectation_Scan.ipynb">
             Open in Colab
           </a>
-          <a class="btn" href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-zz-expectation-scan-lab/resources/notebooks/E.2_Lab_2_ZZ_Expectation_Scan.ipynb">
+          <a class="qst-pill-link"
+             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_2_ZZ_Expectation_Scan.ipynb">
             View on GitHub
           </a>
+          <div class="qst-notebook-path">
+            Notebook: E_2_Lab_2_ZZ_Expectation_Scan.ipynb
+          </div>
         </div>
       </article>
 
       <!-- E.2.3 -->
-      <article class="card">
-        <div class="badge">E.2.3</div>
-        <h2>E.2.3 — BB84 Quantum Key Distribution</h2>
+      <article class="qst-lab-card">
+        <div class="qst-lab-tag">E.2.3</div>
+        <div class="qst-lab-title">E.2.3 — BB84 Quantum Key Distribution</div>
         <p>
-          Implement the BB84 protocol, simulate eavesdropping, and track QBER to decide when
-          a key is secure or must be discarded.
+          Implement and probe the BB84 QKD protocol, exploring basis choices,
+          eavesdropper strategies, key sifting, and error rates under noise.
         </p>
-        <div class="lab-meta">
-          Notebook: <code>E.2_Lab_3_BB84_QKD.ipynb</code>
-        </div>
-        <div class="cta-row">
-          <a class="btn" href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-BB84-QKD-lab/resources/notebooks/E.2_Lab_3_BB84_QKD.ipynb">
+        <div class="qst-lab-footer">
+          <a class="qst-pill-link"
+             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_3_BB84_QKD.ipynb">
             Open in Colab
           </a>
-          <a class="btn" href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-BB84-QKD-lab/resources/notebooks/E.2_Lab_3_BB84_QKD.ipynb">
+          <a class="qst-pill-link"
+             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_3_BB84_QKD.ipynb">
             View on GitHub
           </a>
+          <div class="qst-notebook-path">
+            Notebook: E_2_Lab_3_BB84_QKD.ipynb
+          </div>
         </div>
       </article>
 
       <!-- E.2.4 -->
-      <article class="card">
-        <div class="badge">E.2.4</div>
-        <h2>E.2.4 — Fidelity &amp; Trace Distance Metrics</h2>
+      <article class="qst-lab-card">
+        <div class="qst-lab-tag">E.2.4</div>
+        <div class="qst-lab-title">E.2.4 — Fidelity &amp; Trace Distance</div>
         <p>
-          Measure how quantum states respond to perturbations using fidelity and trace distance,
-          connecting geometric intuitions to operational robustness.
+          Quantify similarity and distinguishability between quantum states
+          using fidelity and trace distance, connecting geometry to QAIS
+          verification.
         </p>
-        <div class="lab-meta">
-          Notebook: <code>E.2_Lab_4_Fidelity_Trace_Distance.ipynb</code>
-        </div>
-        <div class="cta-row">
-          <a class="btn" href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-fidelity-trace-distance-lab/resources/notebooks/E.2_Lab_4_Fidelity_Trace_Distance.ipynb">
+        <div class="qst-lab-footer">
+          <a class="qst-pill-link"
+             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_4_Fidelity_Trace_Distance.ipynb">
             Open in Colab
           </a>
-          <a class="btn" href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-fidelity-trace-distance-lab/resources/notebooks/E.2_Lab_4_Fidelity_Trace_Distance.ipynb">
+          <a class="qst-pill-link"
+             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_4_Fidelity_Trace_Distance.ipynb">
             View on GitHub
           </a>
+          <div class="qst-notebook-path">
+            Notebook: E_2_Lab_4_Fidelity_Trace_Distance.ipynb
+          </div>
         </div>
       </article>
 
       <!-- E.2.5 -->
-      <article class="card">
-        <div class="badge">E.2.5</div>
-        <h2>E.2.5 — Entanglement Tamper Check</h2>
+      <article class="qst-lab-card">
+        <div class="qst-lab-tag">E.2.5</div>
+        <div class="qst-lab-title">E.2.5 — Entanglement Tamper Check</div>
         <p>
-          Model tamper-evident entanglement sharing and verify when an adversary has disturbed
-          a shared Bell pair.
+          Use entangled pairs to detect tampering on a quantum channel,
+          comparing classical versus quantum tamper evidence using correlated
+          measurement statistics.
         </p>
-        <div class="lab-meta">
-          Notebook: <code>E.2_Lab_5_Entanglement_Tamper_Check.ipynb</code>
-        </div>
-        <div class="cta-row">
-          <a class="btn" href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-entanglement-tamper-check-lab/resources/notebooks/E.2_Lab_5_Entanglement_Tamper_Check.ipynb">
+        <div class="qst-lab-footer">
+          <a class="qst-pill-link"
+             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_5_Entanglement_Tamper_Check.ipynb">
             Open in Colab
           </a>
-          <a class="btn" href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-entanglement-tamper-check-lab/resources/notebooks/E.2_Lab_5_Entanglement_Tamper_Check.ipynb">
+          <a class="qst-pill-link"
+             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_5_Entanglement_Tamper_Check.ipynb">
             View on GitHub
           </a>
+          <div class="qst-notebook-path">
+            Notebook: E_2_Lab_5_Entanglement_Tamper_Check.ipynb
+          </div>
         </div>
       </article>
 
       <!-- E.2.6 -->
-      <article class="card">
-        <div class="badge">E.2.6</div>
-        <h2>E.2.6 — VQE Toy Minimization under Noise</h2>
+      <article class="qst-lab-card">
+        <div class="qst-lab-tag">E.2.6</div>
+        <div class="qst-lab-title">E.2.6 — VQE Toy Minimization</div>
         <p>
-          Explore how a simple VQE loop converges, then stress it under simulated noise to see
-          when mitigation strategies become necessary.
+          Implement a toy Variational Quantum Eigensolver (VQE) and study
+          convergence behavior and noise sensitivity across parameter sweeps.
         </p>
-        <div class="lab-meta">
-          Notebook: <code>E.2_Lab_6_VQE_Toy_Minimization.ipynb</code>
-        </div>
-        <div class="cta-row">
-          <a class="btn" href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-VQE-Toy-Minimization-lab/resources/notebooks/E.2_Lab_6_VQE_Toy_Minimization.ipynb">
+        <div class="qst-lab-footer">
+          <a class="qst-pill-link"
+             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_6_VQE_Toy_Minimization.ipynb">
             Open in Colab
           </a>
-          <a class="btn" href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/qais-VQE-Toy-Minimization-lab/resources/notebooks/E.2_Lab_6_VQE_Toy_Minimization.ipynb">
+          <a class="qst-pill-link"
+             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_6_VQE_Toy_Minimization.ipynb">
             View on GitHub
           </a>
+          <div class="qst-notebook-path">
+            Notebook: E_2_Lab_6_VQE_Toy_Minimization.ipynb
+          </div>
         </div>
       </article>
+    </div>
+
+    <!-- QR row (same visual treatment, correct paths) -->
+    <section class="qst-qr-section">
+      <h2>Scan for quick access</h2>
+      <p>
+        These codes mirror the ones printed in Appendix&nbsp;E for E.2.
+      </p>
+      <div class="qst-qr-grid">
+        <div class="qst-qr-tile">
+          <div class="qst-qr-img-wrap">
+            <img src="../assets/qr-labs-portal.svg"
+                 alt="QR code linking to QuSciTech labs portal" />
+          </div>
+          <div class="qst-qr-label-main">Labs portal</div>
+          <div class="qst-qr-label-sub">quscitech.com/labs</div>
+        </div>
+        <div class="qst-qr-tile">
+          <div class="qst-qr-img-wrap">
+            <img src="../assets/qr-labs-e2.svg"
+                 alt="QR code linking to Intermediate labs track E.2" />
+          </div>
+          <div class="qst-qr-label-main">E.2 Intermediate track</div>
+          <div class="qst-qr-label-sub">Direct link to this page.</div>
+        </div>
+        <div class="qst-qr-tile">
+          <div class="qst-qr-img-wrap">
+            <img src="../assets/qr-labs-doi.svg"
+                 alt="QR code linking to concept DOI portal" />
+          </div>
+          <div class="qst-qr-label-main">Concept DOI portal</div>
+          <div class="qst-qr-label-sub">10.5281/zenodo.17212825</div>
+        </div>
+      </div>
     </section>
   </main>
 
-  <!-- same footer + script as e1 -->
+  <footer>
+    QuSciTech Press · E.2 Intermediate QAIS labs.
+  </footer>
 </body>
 </html>

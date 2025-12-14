@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>E.2 — Intermediate Labs · QuSciTech Labs</title>
+  <title>E.3 — Advanced Labs · QuSciTech Labs</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description"
-        content="Intermediate quantum AI labs for Quantum AI Systems: Theory, Architecture, and Applications. Quantum kernels, ZZ expectation scans, BB84 QKD, fidelity metrics, entanglement tamper checks, and VQE toy minimization." />
+        content="Advanced quantum AI labs for Quantum AI Systems: Theory, Architecture, and Applications. Bloch trajectories, CHSH correlation sweeps, density-matrix encodings, hybrid pipelines, Grover search, and QAIS vs. CRQC–LLM stress tests." />
 
   <!-- Same shell + theme as labs.html -->
   <style>
@@ -74,9 +74,7 @@
       font-size: 0.9rem;
     }
 
-    .qst-nav-links a {
-      color: #e2e8f0;
-    }
+    .qst-nav-links a { color: #e2e8f0; }
     .qst-nav-links a:hover {
       color: #fff;
       text-decoration: underline;
@@ -91,9 +89,7 @@
       color: #e2e8f0;
     }
 
-    .qst-bookbelt span {
-      font-weight: 600;
-    }
+    .qst-bookbelt span { font-weight: 600; }
 
     main {
       max-width: 1080px;
@@ -105,11 +101,6 @@
       font-size: 1.8rem;
       margin: 0 0 0.6rem;
       color: var(--qst-accent);
-    }
-
-    h2 {
-      font-size: 1.22rem;
-      margin: 0 0 0.35rem;
     }
 
     p {
@@ -127,9 +118,7 @@
       color: var(--qst-text-muted);
     }
 
-    .qst-back-link span {
-      font-size: 0.95rem;
-    }
+    .qst-back-link span { font-size: 0.95rem; }
 
     .qst-lab-grid {
       margin-top: 1.5rem;
@@ -302,148 +291,235 @@
       <span>←</span> Back to Labs Overview
     </a>
 
-    <h1>E.2 — Intermediate Labs</h1>
+    <h1>E.3 — Advanced Labs</h1>
     <p>
-      These labs support the Intermediate track (E.2) described in Appendix E
-      of <em>Quantum AI Systems: Theory, Architecture, and Applications</em>.
-      They extend the Beginner labs into quantum communication, information
-      metrics, and variational control.
+      These labs support the Advanced track (E.3) in Appendix&nbsp;E. They
+      integrate full QAIS workflows: Bloch-sphere control, Bell tests,
+      density-matrix encodings, hybrid quantum–classical pipelines, Grover
+      search, and the QALIS vs. CRQC–LLM resilience case study.
     </p>
 
     <div class="qst-lab-grid">
-      <!-- E.2.1 -->
+      <!-- E.3.1 -->
       <article class="qst-lab-card">
-        <div class="qst-lab-tag">E.2.1</div>
+        <div class="qst-lab-tag">E.3.1</div>
         <div class="qst-lab-title">
-          E.2.1 — Quantum Kernel: SVM vs Logistic Regression
+          E.3.1 — Bloch Trajectories &amp; Composite Gates
         </div>
         <p>
-          Compare a classical logistic regression classifier with a quantum
-          kernel SVM, highlighting situations where quantum feature spaces
-          offer expressive advantages.
+          Track qubit trajectories on the Bloch sphere under composite gate
+          sequences, connecting control pulses to state evolution and QAIS
+          control logic.
         </p>
         <div class="qst-lab-footer">
           <a class="qst-pill-link"
-             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb">
+             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_1_Bloch_Trajectories.ipynb">
             Open in Colab
           </a>
           <a class="qst-pill-link"
-             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb">
+             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_1_Bloch_Trajectories.ipynb">
             View on GitHub
           </a>
           <div class="qst-notebook-path">
-            Notebook: E_2_Lab_1_Quantum_Kernel_SVM_vs_LogReg.ipynb
+            Notebook: E_3_Lab_1_Bloch_Trajectories.ipynb
           </div>
         </div>
       </article>
 
-      <!-- E.2.2 -->
+      <!-- E.3.2 -->
       <article class="qst-lab-card">
-        <div class="qst-lab-tag">E.2.2</div>
-        <div class="qst-lab-title">E.2.2 — ZZ Expectation Scan</div>
+        <div class="qst-lab-tag">E.3.2</div>
+        <div class="qst-lab-title">
+          E.3.2 — CHSH Correlation Sweep
+        </div>
         <p>
-          Explore the expectation value landscape for ZZ interactions under
-          different variational parameters, linking circuit structure to
-          observable behavior.
+          Sweep measurement angles in a CHSH setup to map classical and quantum
+          correlation regimes and observe Bell inequality violations in
+          practice.
         </p>
         <div class="qst-lab-footer">
           <a class="qst-pill-link"
-             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_2_ZZ_Expectation_Scan.ipynb">
+             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_2_CHSH_Correlation_Sweep_NoCode.ipynb">
             Open in Colab
           </a>
           <a class="qst-pill-link"
-             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_2_ZZ_Expectation_Scan.ipynb">
+             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_2_CHSH_Correlation_Sweep_NoCode.ipynb">
             View on GitHub
           </a>
           <div class="qst-notebook-path">
-            Notebook: E_2_Lab_2_ZZ_Expectation_Scan.ipynb
+            Notebook: E_3_Lab_2_CHSH_Correlation_Sweep_NoCode.ipynb
           </div>
         </div>
       </article>
 
-      <!-- E.2.3 -->
+      <!-- E.3.3 -->
       <article class="qst-lab-card">
-        <div class="qst-lab-tag">E.2.3</div>
-        <div class="qst-lab-title">E.2.3 — BB84 Quantum Key Distribution</div>
+        <div class="qst-lab-tag">E.3.3</div>
+        <div class="qst-lab-title">
+          E.3.3 — Tiny VQC vs Logistic Regression
+        </div>
         <p>
-          Implement and probe the BB84 QKD protocol, exploring basis choices,
-          eavesdropper strategies, key sifting, and error rates under noise.
+          Compare a tiny Variational Quantum Circuit classifier against a
+          classical logistic regression baseline, focusing on expressivity and
+          QAIS metric evaluation.
         </p>
         <div class="qst-lab-footer">
           <a class="qst-pill-link"
-             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_3_BB84_QKD.ipynb">
+             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_3_Tiny_VQC_vs_LogReg_NoCode.ipynb">
             Open in Colab
           </a>
           <a class="qst-pill-link"
-             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_3_BB84_QKD.ipynb">
+             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_3_Tiny_VQC_vs_LogReg_NoCode.ipynb">
             View on GitHub
           </a>
           <div class="qst-notebook-path">
-            Notebook: E_2_Lab_3_BB84_QKD.ipynb
+            Notebook: E_3_Lab_3_Tiny_VQC_vs_LogReg_NoCode.ipynb
           </div>
         </div>
       </article>
 
-      <!-- E.2.4 -->
+      <!-- E.3.4 -->
       <article class="qst-lab-card">
-        <div class="qst-lab-tag">E.2.4</div>
-        <div class="qst-lab-title">E.2.4 — Fidelity &amp; Trace Distance</div>
+        <div class="qst-lab-tag">E.3.4</div>
+        <div class="qst-lab-title">
+          E.3.4 — Hybrid Pipeline: Classical Feature Map → Quantum Kernel SVM
+        </div>
         <p>
-          Quantify similarity and distinguishability between quantum states
-          using fidelity and trace distance, connecting geometry to QAIS
-          verification.
+          Build a hybrid QAIS pipeline that combines quantum kernels with
+          classical post-processing, including monitoring hooks and evaluation
+          metrics for case-study analysis.
         </p>
         <div class="qst-lab-footer">
           <a class="qst-pill-link"
-             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_4_Fidelity_Trace_Distance.ipynb">
+             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_4_Hybrid_Pipeline_QKernelSVM_NoCode.ipynb">
             Open in Colab
           </a>
           <a class="qst-pill-link"
-             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_4_Fidelity_Trace_Distance.ipynb">
+             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_4_Hybrid_Pipeline_QKernelSVM_NoCode.ipynb">
             View on GitHub
           </a>
           <div class="qst-notebook-path">
-            Notebook: E_2_Lab_4_Fidelity_Trace_Distance.ipynb
+            Notebook: E_3_Lab_4_Hybrid_Pipeline_QKernelSVM_NoCode.ipynb
           </div>
         </div>
       </article>
 
-      <!-- E.2.5 -->
+      <!-- E.3.5 -->
       <article class="qst-lab-card">
-        <div class="qst-lab-tag">E.2.5</div>
-        <div class="qst-lab-title">E.2.5 — Entanglement Tamper Check</div>
+        <div class="qst-lab-tag">E.3.5</div>
+        <div class="qst-lab-title">
+          E.3.5 — Grover Success vs Noise
+        </div>
         <p>
-          Use entangled pairs to detect tampering on a quantum channel,
-          comparing classical versus quantum tamper evidence using correlated
-          measurement statistics.
+          Study Grover’s search algorithm under increasing noise levels and
+          imperfect oracles, quantifying robustness of success amplitudes and
+          QAIS search metrics.
         </p>
         <div class="qst-lab-footer">
           <a class="qst-pill-link"
-             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_5_Entanglement_Tamper_Check.ipynb">
+             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_5_Grover_Success_vs_Noise_NoCode.ipynb">
             Open in Colab
           </a>
           <a class="qst-pill-link"
-             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_5_Entanglement_Tamper_Check.ipynb">
+             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_5_Grover_Success_vs_Noise_NoCode.ipynb">
             View on GitHub
           </a>
           <div class="qst-notebook-path">
-            Notebook: E_2_Lab_5_Entanglement_Tamper_Check.ipynb
+            Notebook: E_3_Lab_5_Grover_Success_vs_Noise_NoCode.ipynb
           </div>
         </div>
       </article>
 
-      <!-- E.2.6 -->
+      <!-- E.3.6 -->
       <article class="qst-lab-card">
-        <div class="qst-lab-tag">E.2.6</div>
-        <div class="qst-lab-title">E.2.6 — VQE Toy Minimization</div>
+        <div class="qst-lab-tag">E.3.6</div>
+        <div class="qst-lab-title">
+          E.3.6 — Density Matrix Encoding Metrics
+        </div>
         <p>
-          Implement a toy Variational Quantum Eigensolver (VQE) and study
-          convergence behavior and noise sensitivity across parameter sweeps.
+          Use density-matrix encodings to track coherence, populations, and
+          mixedness, connecting metrics to QAIS robustness and noise modeling.
         </p>
         <div class="qst-lab-footer">
           <a class="qst-pill-link"
-             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Intermediate_Labs/E_2_Lab_6_VQE_Toy_Minimization.ipynb">
+             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_6_Density_Matrix_Encoding_Metrics.ipynb">
             Open in Colab
           </a>
           <a class="qst-pill-link"
-             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Interme
+             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_6_Density_Matrix_Encoding_Metrics.ipynb">
+            View on GitHub
+          </a>
+          <div class="qst-notebook-path">
+            Notebook: E_3_Lab_6_Density_Matrix_Encoding_Metrics.ipynb
+          </div>
+        </div>
+      </article>
+
+      <!-- E.3.7 (QALIS vs. CRQC–LLM stress test, if present) -->
+      <article class="qst-lab-card">
+        <div class="qst-lab-tag">E.3.7</div>
+        <div class="qst-lab-title">
+          E.3.7 — QALIS vs. CRQC–LLM Stress Test
+        </div>
+        <p>
+          Integrate previous labs into a full QAIS vs. CRQC–LLM stress-test,
+          comparing resilience, robustness, and failure modes across the
+          dual-case study.
+        </p>
+        <div class="qst-lab-footer">
+          <a class="qst-pill-link"
+             href="https://colab.research.google.com/github/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_7_QALIS_vs_CRQC_LLM_Stress_Test.ipynb">
+            Open in Colab
+          </a>
+          <a class="qst-pill-link"
+             href="https://github.com/jopaneur/quscitech-labs/blob/main/public/labs/Advanced_Labs/E_3_Lab_7_QALIS_vs_CRQC_LLM_Stress_Test.ipynb">
+            View on GitHub
+          </a>
+          <div class="qst-notebook-path">
+            Notebook:
+            E_3_Lab_7_QALIS_vs_CRQC_LLM_Stress_Test.ipynb
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- QR row -->
+    <section class="qst-qr-section">
+      <h2>Scan for quick access</h2>
+      <p>
+        These codes mirror the E.3 entries in Appendix&nbsp;E.
+      </p>
+      <div class="qst-qr-grid">
+        <div class="qst-qr-tile">
+          <div class="qst-qr-img-wrap">
+            <img src="../assets/qr-labs-portal.svg"
+                 alt="QR code linking to QuSciTech labs portal" />
+          </div>
+          <div class="qst-qr-label-main">Labs portal</div>
+          <div class="qst-qr-label-sub">quscitech.com/labs</div>
+        </div>
+        <div class="qst-qr-tile">
+          <div class="qst-qr-img-wrap">
+            <img src="../assets/qr-labs-e3.svg"
+                 alt="QR code linking to Advanced labs track E.3" />
+          </div>
+          <div class="qst-qr-label-main">E.3 Advanced track</div>
+          <div class="qst-qr-label-sub">Direct link to this page.</div>
+        </div>
+        <div class="qst-qr-tile">
+          <div class="qst-qr-img-wrap">
+            <img src="../assets/qr-labs-doi.svg"
+                 alt="QR code linking to concept DOI portal" />
+          </div>
+          <div class="qst-qr-label-main">Concept DOI portal</div>
+          <div class="qst-qr-label-sub">10.5281/zenodo.17212825</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    QuSciTech Press · E.3 Advanced QAIS labs.
+  </footer>
+</body>
+</html>

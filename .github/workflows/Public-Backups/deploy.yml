@@ -1,0 +1,161 @@
+name: Deploy (Key-based) to QuSciTech (Public Labs) + Smoke Test
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'public/labs/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      SRC_BEGINNER: public/labs/Beginner_Labs
+      SRC_INTERMEDIATE: public/labs/Intermediate_Labs
+      SRC_ADVANCED: public/labs/Advanced_Labs
+      WEB_README: public/labs/README.md
+      REMOTE_BASE: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}/labs
+      SMOKE_URL: "https://quscitech.com/instructors/QST-INST-2025/resources/hello-ci.html"
+
+    steps:
+      - name: "📥 Checkout"
+        uses: actions/checkout@v4
+
+      - name: "🗂️ Set staging path"
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "STAGE_DIR=$GITHUB_WORKSPACE/labs_stage" >> "$GITHUB_ENV"
+          echo "Staging will use: $GITHUB_WORKSPACE/labs_stage"
+
+      - name: "🏗️ Prepare tiered labs tree (staging)"
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Staging path: $STAGE_DIR"
+          rm -rf "$STAGE_DIR"
+          mkdir -p "$STAGE_DIR"/{Beginner_Labs,Intermediate_Labs,Advanced_Labs}
+
+          cp -a "$SRC_BEGINNER"/.      "$STAGE_DIR/Beginner_Labs/"
+          cp -a "$SRC_INTERMEDIATE"/.  "$STAGE_DIR/Intermediate_Labs/"
+          cp -a "$SRC_ADVANCED"/.      "$STAGE_DIR/Advanced_Labs/"
+
+          if [[ -f "$WEB_README" ]]; then
+            cp -a "$WEB_README" "$STAGE_DIR/README.md"
+          else
+            echo "::warning ::No README.md found at $WEB_README"
+          fi
+
+      - name: "🔎 List staged content (debug)"
+        shell: bash
+        run: |
+          echo "== staged tree (dirs) =="
+          find "$STAGE_DIR" -maxdepth 2 -type d -printf "%P\n" | sort
+          echo "== staged files (sample) =="
+          find "$STAGE_DIR" -type f -maxdepth 2 -printf "%P\n" | sort | sed -n '1,50p'
+
+      - name: "🧪 Enforce one+ notebook per lab"
+        shell: bash
+        run: |
+          set -euo pipefail
+          miss=0
+          while IFS= read -r d; do
+            n=$(find "$d" -maxdepth 1 -type f -name '*.ipynb' | wc -l)
+            if (( n < 1 )); then
+              echo "::error ::$d has no notebooks"
+              miss=$((miss+1))
+            fi
+          done < <(find "$STAGE_DIR" -path '*/resources/notebooks' -type d)
+          (( miss == 0 )) || exit 1
+
+      - name: "🧹 Remove notebook backups from stage"
+        shell: bash
+        run: |
+          set -euo pipefail
+          find "$STAGE_DIR" -type d \( -name _backup -o -name backup \) -prune -exec rm -rf {} +
+
+      - name: "🔐 Write deploy private key (temporary)"
+        shell: bash
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DEPLOY_SSH_KEY:-}" ]; then
+            echo "::error::DEPLOY_SSH_KEY is empty; cannot continue"
+            exit 1
+          fi
+          printf "%s\n" "${DEPLOY_SSH_KEY}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          command -v ssh >/dev/null 2>&1 || sudo apt-get update -y && sudo apt-get install -y openssh-client
+
+      # -------------------------------------------------------------------
+      # FIXED: Ensure remote public labs directory exists + echo path
+      # -------------------------------------------------------------------
+      - name: "🏗️ Ensure remote public labs directory exists"
+        shell: bash
+        env:
+          H: ${{ secrets.SFTP_HOST_PUBLIC }}
+          U: ${{ secrets.SFTP_USER_PUBLIC }}
+        run: |
+          set -euo pipefail
+          echo "REMOTE_BASE is: ${REMOTE_BASE}"
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no "${U}@${H}" \
+            "mkdir -p '${REMOTE_BASE}' && ls -ld '${REMOTE_BASE}'"
+
+      # -------------------------------------------------------------------
+      # FIXED: Clean, simple scp target (no nested quotes)
+      # -------------------------------------------------------------------
+      - name: "📤 Upload staged labs (scp, key-based)"
+        shell: bash
+        env:
+          H: ${{ secrets.SFTP_HOST_PUBLIC }}
+          U: ${{ secrets.SFTP_USER_PUBLIC }}
+        run: |
+          set -euo pipefail
+          echo "Uploading to REMOTE_BASE=${REMOTE_BASE}"
+          if [ -d "$STAGE_DIR" ]; then
+            scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r "$STAGE_DIR"/* \
+              "${U}@${H}:${REMOTE_BASE}/" || {
+                echo "::error::scp upload failed"
+                exit 1
+              }
+            echo "✅ Uploaded labs_stage/* to ${REMOTE_BASE}/"
+          else
+            echo "::error::labs_stage directory not found"
+            exit 1
+          fi
+
+      - name: "🌐 Verify smoke file reachable (HTTP)"
+        shell: bash
+        env:
+          URL: ${{ env.SMOKE_URL }}
+        run: |
+          set -euo pipefail
+          echo "Checking $URL (3 attempts, 2-sec delay)..."
+          for i in {1..3}; do
+            code=$(curl -sS -o /tmp/hello-ci.html -w '%{http_code}' \
+              --retry 3 --retry-delay 2 --fail "$URL" || true)
+            if [[ "$code" == "200" ]]; then
+              echo "✅ Smoke test passed (HTTP 200)"
+              exit 0
+            fi
+            echo "Attempt $i failed (HTTP $code). Retrying in 3 s…"; sleep 3
+          done
+          echo "::error ::Smoke test failed for $URL"
+          exit 1
+
+      - name: "🧹 Cleanup deploy key"
+        if: always()
+        shell: bash
+        run: |
+          shred -u /tmp/deploy_key 2>/dev/null || rm -f /tmp/deploy_key || true
+
+      - name: "🧾 Complete job"
+        shell: bash
+        run: echo "Public labs deploy complete"

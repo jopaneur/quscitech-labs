@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QuSciTech Labs — Track Overview (E.1 / E.2 / E.3) · QuSciTech™</title>
+  <style>
+    :root{ --qs-blue:#002244; --qs-amber:#ffa149; --qs-bg:#0b0f14; --qs-ink:#eef2f6; }
+    *{ box-sizing:border-box; margin:0; padding:0 }
+    body{ font-family:Arial,Helvetica,sans-serif; background:var(--qs-bg); color:var(--qs-ink); line-height:1.6 }
+
+    /* Header (brand first line, nav second line) */
+    header{
+      position:fixed; inset:0 0 auto 0; z-index:1000;
+      display:flex; flex-direction:column; gap:10px;
+      background:var(--qs-blue); color:#fff;
+      padding:16px 24px;
+      box-shadow:0 2px 8px rgba(0,0,0,.4);
+      transition:all .3s ease-in-out;
+    }
+    header.shrink{ padding:10px 18px; background:rgba(0,34,68,.95); backdrop-filter:blur(6px) }
+
+    .logo{
+      display:block; width:100%; text-align:left; white-space:nowrap;
+      color:var(--qs-amber); text-decoration:none; font-weight:bold; font-size:1.6rem; line-height:1.2;
+    }
+    .logo sup{ font-size:.6em; vertical-align:top }
+    .logo:hover{ color:#ffb766 }
+
+    nav[aria-label="Primary"]{ display:flex; gap:12px; flex-wrap:wrap; align-items:center }
+    nav[aria-label="Primary"] a{ color:#fff; text-decoration:none; font-size:.95rem; transition:color .2s }
+    nav[aria-label="Primary"] a:hover{ color:var(--qs-amber) }
+
+    /* Reviewers dropdown */
+    .menu{ position:relative }
+    .menu > a::after{ content:"▾"; margin-left:6px; font-size:.8em }
+    .submenu{
+      position:absolute; top:100%; left:0; min-width:260px;
+      background:#0f1e33; border:1px solid rgba(255,255,255,.12);
+      border-radius:8px; padding:6px 0; display:none; box-shadow:0 10px 24px rgba(0,0,0,.35);
+    }
+    .submenu a{ display:block; padding:10px 12px; font-size:.92rem; color:#e7efff; text-decoration:none }
+    .submenu a:hover{ background:rgba(255,255,255,.08); color:var(--qs-amber) }
+    .menu:hover .submenu, .menu:focus-within .submenu{ display:block }
+
+    /* Bookbelt */
+    .bookbelt{
+      position:fixed; top:88px; left:0; right:0; z-index:999;
+      background:#0e1c2b; color:#cfe2ff; text-align:center;
+      padding:8px 10px; border-top:1px solid rgba(255,255,255,.08); border-bottom:1px solid rgba(255,255,255,.08);
+      transition:top .3s ease-in-out;
+    }
+    header.shrink + .bookbelt{ top:70px }
+    .bookbelt strong{ color:#fff } .bookbelt em{ color:#ffd9a6; font-style:normal }
+
+    /* Layout */
+    main{ max-width:1100px; margin:136px auto 80px; padding:0 20px }
+    h1{ color:var(--qs-amber); font-size:1.9rem; margin:10px 0 16px }
+    h2{ color:#d7e6ff; font-size:1.2rem; margin:16px 0 10px }
+    p{ margin-bottom:12px; text-align:left }
+
+    .cards{ display:grid; gap:18px }
+    .card{
+      background:#0f1722; border:1px solid rgba(255,255,255,.09);
+      border-radius:10px; padding:18px; margin:4px 0;
+    }
+    .card h2{ margin-top:0 }
+    .badge{ display:inline-block; font-size:.8rem; padding:3px 8px; border-radius:999px;
+            background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.16); margin-bottom:6px; }
+    .cta-row{ margin-top:10px; display:flex; flex-wrap:wrap; gap:8px }
+    .btn{
+      display:inline-block; padding:6px 12px; border-radius:999px; font-size:.9rem;
+      border:1px solid rgba(255,255,255,.25); text-decoration:none; color:#e2ecff;
+      background:rgba(255,255,255,.03); cursor:pointer;
+    }
+    .btn:hover{ border-color:var(--qs-amber); color:var(--qs-amber); background:rgba(255,255,255,.06) }
+
+    .qr-strip{
+      margin-top:26px; padding-top:18px; border-top:1px solid rgba(255,255,255,.12);
+    }
+    .qr-grid{
+      display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start;
+      margin-top:12px;
+    }
+    .qr-block img{ display:block; width:120px; height:120px }
+    .qr-caption{ font-size:.86rem; margin-top:6px; max-width:180px }
+
+    .meta{ font-size:.9rem; color:#cbd5e1 }
+
+    footer{
+      text-align:center; font-size:.9rem; color:#cbd5e1;
+      border-top:1px solid rgba(255,255,255,.1); padding:20px; background:var(--qs-blue)
+    }
+    footer a{ color:var(--qs-amber); text-decoration:none }
+    footer a:hover{ text-decoration:underline }
+
+    @media (max-width:768px){
+      .logo{ font-size:1.45rem }
+      .bookbelt{ top:92px }
+      header.shrink + .bookbelt{ top:74px }
+      main{ margin-top:142px }
+      .qr-grid{ justify-content:flex-start }
+    }
+  </style>
+</head>
+<body>
+  <header id="site-header">
+    <a class="logo" href="https://quscitech.com">QuSciTech<sup>™</sup></a>
+    <nav aria-label="Primary">
+      <a href="/welcome.html">Welcome</a>
+      <a href="/about.html">About</a>
+      <a href="/contents.html">What’s inside</a>
+      <a href="/labs/labs.html">Labs</a>
+      <a href="/instructors.html">Instructor</a>
+      <a href="/press.html">Press</a>
+
+      <div class="menu" aria-label="Reviewers">
+        <a href="/reviews.html" aria-haspopup="true" aria-expanded="false">Reviewers</a>
+        <div class="submenu" aria-label="Reviewers menu">
+          <a href="/reviews.html#general">General Reviewers</a>
+          <a href="/reviewers/index.html">Peer Reviewers</a>
+        </div>
+      </div>
+
+      <a href="/doi.html">DOI</a>
+      <a href="/contact.html">Contact</a>
+      <a href="/buy.html">Purchase Quantum Book</a>
+    </nav>
+  </header>
+
+  <div class="bookbelt" role="region" aria-label="Book Title">
+    <strong>Quantum AI Systems</strong>: <em>Theory, Architecture, and Applications</em>
+  </div>
+
+  <main id="main" tabindex="-1">
+    <h1>QuSciTech Labs — Track Overview (E.1 / E.2 / E.3)</h1>
+    <p>
+      This portal provides access to the E.1 (Beginner), E.2 (Intermediate), and E.3 (Advanced) tracks
+      that accompany <em>Quantum AI Systems: Theory, Architecture, and Applications</em>.
+      Each track links to a track-level landing page with Colab badges, GitHub links, and DOI-aligned guidance.
+    </p>
+
+    <section class="cards" aria-label="Lab Tracks">
+      <article class="card">
+        <div class="badge">Track E.1 · Beginner</div>
+        <h2>E.1 — Foundational Quantum Concepts</h2>
+        <p>
+          Focuses on single-qubit superposition, entanglement, angle encoding, circuit depth vs. noise,
+          and the quantum teleportation protocol. Ideal for readers encountering quantum states,
+          measurement, and circuits for the first time.
+        </p>
+        <p class="meta">
+          Includes 5 no-code labs with guided narratives, figures, and pre-wired Qiskit code for
+          Google Colab and IBM Quantum backends.
+        </p>
+        <div class="cta-row">
+          <a class="btn" href="/labs/e1/">Open E.1 Track →</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="badge">Track E.2 · Intermediate</div>
+        <h2>E.2 — Communication, Metrics &amp; Variational Control</h2>
+        <p>
+          Extends E.1 concepts into BB84 quantum key distribution, tamper-evident entanglement checks,
+          quantum kernel methods, expectation scans, fidelity metrics, and VQE toy minimization.
+        </p>
+        <p class="meta">
+          Includes 6 labs designed for readers who are comfortable with basic quantum circuits and
+          want to explore QAIS-relevant metrics and control.
+        </p>
+        <div class="cta-row">
+          <a class="btn" href="/labs/e2/">Open E.2 Track →</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="badge">Track E.3 · Advanced</div>
+        <h2>E.3 — Full QAIS Pipelines &amp; Case Study Stress Tests</h2>
+        <p>
+          Integrates Bloch-sphere control, Bell tests, density-matrix encodings, hybrid quantum–classical
+          pipelines, Grover search robustness, and the QALIS vs. CRQC–LLM resilience case study.
+        </p>
+        <p class="meta">
+          Includes 7 labs geared toward advanced readers, instructors, and reviewers examining full QAIS
+          behavior under noise, interference, and architectural stress.
+        </p>
+        <div class="cta-row">
+          <a class="btn" href="/labs/e3/">Open E.3 Track →</a>
+        </div>
+      </article>
+    </section>
+
+    <section class="qr-strip" aria-label="QR Access">
+      <h2>QR Access (for print readers)</h2>
+      <p>
+        Print readers can jump directly into the online labs by scanning the QR codes below. Each code
+        resolves to a stable URL hosted at <strong>quscitech.com</strong>.
+      </p>
+
+      <div class="qr-grid">
+        <div class="qr-block">
+          <img src="assets/qr-labs-portal.svg" alt="Scan to open Labs portal" loading="lazy" />
+          <div class="qr-caption">
+            Scan to open Labs portal<br />
+            <code>quscitech.com/labs</code>
+          </div>
+        </div>
+
+        <div class="qr-block">
+          <img src="assets/qr-labs-e1.svg" alt="Scan to open Beginner labs (E.1)" loading="lazy" />
+          <div class="qr-caption">
+            Scan to open Beginner labs (E.1)<br />
+            <code>/labs/e1/</code>
+          </div>
+        </div>
+
+        <div class="qr-block">
+          <img src="assets/qr-labs-doi.svg" alt="Scan for DOI portal (Zenodo concept record)" loading="lazy" />
+          <div class="qr-caption">
+            Scan for DOI portal<br />
+            Concept DOI <code>10.5281/zenodo.17212825</code>
+          </div>
+        </div>
+      </div>
+
+      <p class="meta" style="margin-top:14px;">
+        For a persistent, citable entry point to the full QuantumAI-Labs collection, use the concept DOI:
+        <a href="https://doi.org/10.5281/zenodo.17212825">10.5281/zenodo.17212825</a>.
+      </p>
+    </section>
+  </main>
+
+  <footer role="contentinfo">
+    © 2025 Dr. Joe Wilson — All Rights Reserved. ·
+    DOI: <a href="https://doi.org/10.5281/zenodo.17212825">10.5281/zenodo.17212825</a> ·
+    <a href="/sitemap.xml">Sitemap</a>
+  </footer>
+
+  <script>
+    const header=document.getElementById('site-header');
+    window.addEventListener('scroll',()=>{
+      if(window.scrollY>60) header.classList.add('shrink');
+      else header.classList.remove('shrink');
+    },{passive:true});
+  </script>
+</body>
+</html>
+

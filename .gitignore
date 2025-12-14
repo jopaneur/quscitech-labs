@@ -1,30 +1,17 @@
-# ...top unchanged...
+# =========================================================
+# QuSciTech Labs — PUBLIC REPOSITORY (.gitignore)
+# Purpose:
+#   - Host public, no-code notebooks
+#   - Serve Google Colab + GitHub viewers
+#   - NEVER contain private ops, access logic, or secrets
+# =========================================================
 
-# 🔒 2. Private/Internal Folders
-/system/
-/private/
-#/ Local-only at repo root
-/local/
-/drafts/
-/backups/
+# ---------------------------------------------------------
+# 1. OS junk / editor artifacts
+# ---------------------------------------------------------
+.DS_Store
+Thumbs.db
 
-# ...sections unchanged...
-
-# 📚 3. Public Documentation and Deployment (Keep Visible)
-!.github/
-!.github/workflows/
-!.github/ISSUE_TEMPLATE/
-!docs/
-!helpers/
-!LICENSE
-!README.md
-!Labs_MASTER_README.md
-# (remove these – they don't exist at repo root)
-# !Beginner_Labs/
-# !Intermediate_Labs/
-# !Advanced_Labs/
-
-# ⚙️ 4. OS/IDE Metadata
 .vscode/
 .idea/
 *.iml
@@ -32,35 +19,97 @@
 *.user
 *.sln.docstates
 
-# 🧪 5. Large Assets (root-only)
-#/ Ignore only at repo root so lab assets still publish
+# ---------------------------------------------------------
+# 2. Temporary, backup, and archive folders
+# ---------------------------------------------------------
+*.bak
+*.tmp
+*~
+.~*
+
+_archive/
+**/_archive/
+
+backup/
+backups/
+**/backup/
+**/backups/
+
+# ---------------------------------------------------------
+# 3. Node / build artifacts (should not exist here)
+# ---------------------------------------------------------
+node_modules/
+dist/
+build/
+.cache/
+*.log
+
+# ---------------------------------------------------------
+# 4. STRICTLY FORBIDDEN: private / internal material
+# (If these ever appear, they MUST be ignored)
+# ---------------------------------------------------------
+/system/
+/private/
+/internal/
+/admin/
+/ops/
+/confidential/
+/local/
+/drafts/
+
+QAIS_*_Internal_Ops.docx
+QAIS_*_TA_Checklist.docx
+
+/private/**/*.docx
+/private/**/*.pdf
+/private/**/*.md
+
+**/ops/**/*
+**/admin/**/*
+**/confidential/**/*
+
+# ---------------------------------------------------------
+# 5. Large raw datasets (root-only)
+# ---------------------------------------------------------
 /assets/raw/
 /data/
 /datasets/
 
-# ============================
-# 🧠 QuSciTech Private Materials
-QAIS_*_Internal_Ops.docx
-QAIS_*_TA_Checklist.docx
-/private/ops/
-(private/admin|private/confidential)/
-/private/**/*.docx
-/private/**/*.pdf
-/private/**/*.md
-**/ops/**/*
-**/admin/**/*
+# ---------------------------------------------------------
+# 6. Notebook-generated clutter
+# ---------------------------------------------------------
+**/.ipynb_checkpoints/
+**/__pycache__/
+**/*.log
+**/tmp/**
 
-# Placeholders
-!.gitkeep
-!public/labs/**/resources/assets/data/.gitkeep
-
-# Notebook backups (keep hidden)
+# ---------------------------------------------------------
+# 7. Notebook backups inside lab trees
+# ---------------------------------------------------------
 public/labs/**/resources/notebooks/_backup/
 public/labs/**/resources/notebooks/backup/
 
-# Explicit public whitelists (correct paths)
+# ---------------------------------------------------------
+# 8. Placeholders (explicitly allowed)
+# ---------------------------------------------------------
+!.gitkeep
+!public/labs/**/resources/assets/data/.gitkeep
+
+# ---------------------------------------------------------
+# 9. PUBLIC WHITELIST — these MUST remain visible
+# ---------------------------------------------------------
 !public/
 !public/labs/
 !public/labs/Beginner_Labs/
 !public/labs/Intermediate_Labs/
 !public/labs/Advanced_Labs/
+
+!.github/
+!.github/workflows/
+!.github/ISSUE_TEMPLATE/
+
+!docs/
+!helpers/
+!LICENSE
+!README.md
+!Labs_MASTER_README.md

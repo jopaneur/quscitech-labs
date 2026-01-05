@@ -1,180 +1,73 @@
-name: Deploy (Key-based) to QuSciTech (Public Labs) + Smoke Test
+name: CI (No Deploy) — QuSciTech Public Labs
+
+# PURPOSE
+# - This workflow is intentionally NON-DEPLOYING.
+# - It exists only to validate repository structure and prevent drift.
+# - It MUST NOT SSH/SCP/RSYNC to any server.
+#
+# POLICY
+# - The webserver is the system of record.
+# - GitHub is a mirror, not a deployment source.
 
 on:
   push:
     branches: [ main ]
     paths:
-      - 'public/labs/**'
-      - '.github/workflows/deploy.yml'
+      - "public/labs/**"
+      - ".github/workflows/deploy.yml"
   workflow_dispatch: {}
 
 permissions:
   contents: read
 
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
-
-    env:
-      SRC_BEGINNER: public/labs/Beginner_Labs
-      SRC_INTERMEDIATE: public/labs/Intermediate_Labs
-      SRC_ADVANCED: public/labs/Advanced_Labs
-      WEB_README: public/labs/README.md
-
-      # Root on the server (already set to /home/quscitech/public_html/instructors/QST-INST-2025/resources/)
-      SFTP_ROOT: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}
-
-      # Final target: /home/quscitech/public_html/instructors/QST-INST-2025/resources/labs
-      REMOTE_BASE: ${{ secrets.SFTP_REMOTE_DIR_PUBLIC }}/labs
-
-      SMOKE_URL: "https://quscitech.com/instructors/QST-INST-2025/resources/hello-ci.html"
-
     steps:
       - name: "📥 Checkout"
         uses: actions/checkout@v4
 
-      - name: "🗂️ Set staging path"
+      - name: "🔎 Validate expected lab roots exist"
         shell: bash
         run: |
           set -euo pipefail
-          echo "STAGE_DIR=$GITHUB_WORKSPACE/labs_stage" >> "$GITHUB_ENV"
-          echo "Staging will use: $GITHUB_WORKSPACE/labs_stage"
-
-      - name: "🏗️ Prepare tiered labs tree (staging)"
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "Staging path: $STAGE_DIR"
-
-          # Clean stage
-          rm -rf "$STAGE_DIR"
-          mkdir -p "$STAGE_DIR"
-
-          # Copy the three lab tracks
-          cp -R "$SRC_BEGINNER"     "$STAGE_DIR/Beginner_Labs"
-          cp -R "$SRC_INTERMEDIATE" "$STAGE_DIR/Intermediate_Labs"
-          cp -R "$SRC_ADVANCED"     "$STAGE_DIR/Advanced_Labs"
-
-          # Shared README
-          if [[ -f "$WEB_README" ]]; then
-            cp "$WEB_README" "$STAGE_DIR/README.md"
-          else
-            echo "::warning ::No README.md found at $WEB_README"
-          fi
-
-          # ---------- NEW: portal shell + QR assets + track entry pages ----------
-
-          # Top-level labs portal entry points
-          cp public/labs/labs.html  "$STAGE_DIR/labs.html"
-          cp public/labs/index.html "$STAGE_DIR/index.html"
-
-          # Track landing pages (E.1 / E.2 / E.3)
-          cp -R public/labs/e1 "$STAGE_DIR/e1"
-          cp -R public/labs/e2 "$STAGE_DIR/e2"
-          cp -R public/labs/e3 "$STAGE_DIR/e3"
-
-          # QR code assets
-          cp -R public/labs/assets "$STAGE_DIR/assets"
-
-      - name: "🔎 List staged content (debug)"
-        shell: bash
-        run: |
-          echo "== staged tree (dirs) =="
-          find "$STAGE_DIR" -maxdepth 2 -type d -printf "%P\n" | sort
-
-          echo "== staged files (sample) =="
-          find "$STAGE_DIR" -maxdepth 3 -type f -printf "%P\n" | sort | sed -n '1,80p'
-
-      - name: "🧪 Enforce one+ notebook per lab"
-        shell: bash
-        run: |
-          set -euo pipefail
-          miss=0
-          while IFS= read -r d; do
-            n=$(find "$d" -maxdepth 1 -type f -name '*.ipynb' | wc -l)
-            if (( n < 1 )); then
-              echo "::error ::$d has no notebooks"
-              miss=$((miss+1))
+          for d in             public/labs/Beginner_Labs             public/labs/Intermediate_Labs             public/labs/Advanced_Labs
+          do
+            if [ ! -d "$d" ]; then
+              echo "::error ::Missing expected directory: $d"
+              exit 1
             fi
-          done < <(find "$STAGE_DIR" -path '*/resources/notebooks' -type d)
-          (( miss == 0 )) || exit 1
-
-      - name: "🧹 Remove notebook backups from stage"
-        shell: bash
-        run: |
-          set -euo pipefail
-          find "$STAGE_DIR" -type d \( -name _backup -o -name backup \) -prune -exec rm -rf {} +
-
-      - name: "🔐 Write deploy private key (temporary)"
-        shell: bash
-        env:
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-        run: |
-          set -euo pipefail
-          if [ -z "${DEPLOY_SSH_KEY:-}" ]; then
-            echo "::error::DEPLOY_SSH_KEY is empty; cannot continue"
-            exit 1
-          fi
-          printf "%s\n" "${DEPLOY_SSH_KEY}" > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
-          command -v ssh >/dev/null 2>&1 || sudo apt-get update -y && sudo apt-get install -y openssh-client
-
-      - name: "🏗️ Ensure remote public labs directory exists"
-        shell: bash
-        env:
-          H: ${{ secrets.SFTP_HOST_PUBLIC }}
-          U: ${{ secrets.SFTP_USER_PUBLIC }}
-        run: |
-          set -euo pipefail
-          echo "REMOTE_BASE is: ${REMOTE_BASE}"
-          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no "${U}@${H}" \
-            "mkdir -p '${REMOTE_BASE}' && ls -ld '${REMOTE_BASE}'"
-
-      - name: "📤 Upload staged labs (scp, key-based)"
-        shell: bash
-        env:
-          H: ${{ secrets.SFTP_HOST_PUBLIC }}
-          U: ${{ secrets.SFTP_USER_PUBLIC }}
-        run: |
-          set -euo pipefail
-          echo "Uploading to REMOTE_BASE=${REMOTE_BASE}"
-          if [ -d "$STAGE_DIR" ]; then
-            scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r "$STAGE_DIR"/* \
-              "${U}@${H}:${REMOTE_BASE}/" || {
-                echo "::error::scp upload failed"
-                exit 1
-              }
-            echo "✅ Uploaded labs_stage/* to ${REMOTE_BASE}/"
-          else
-            echo "::error::labs_stage directory not found"
-            exit 1
-          fi
-
-      - name: "🌐 Verify smoke file reachable (HTTP)"
-        shell: bash
-        env:
-          URL: ${{ env.SMOKE_URL }}
-        run: |
-          set -euo pipefail
-          echo "Checking $URL (3 attempts, 2-sec delay)..."
-          for i in {1..3}; do
-            code=$(curl -sS -o /tmp/hello-ci.html -w '%{http_code}' \
-              --retry 3 --retry-delay 2 --fail "$URL" || true)
-            if [[ "$code" == "200" ]]; then
-              echo "✅ Smoke test passed (HTTP 200)"
-              exit 0
-            fi
-            echo "Attempt $i failed (HTTP $code). Retrying in 3 s…"; sleep 3
           done
-          echo "::error ::Smoke test failed for $URL"
-          exit 1
+          echo "✅ Expected tier roots exist."
 
-      - name: "🧹 Cleanup deploy key"
-        if: always()
+      - name: "🔎 Quick naming sanity (lowercase slugs + resources layout)"
         shell: bash
         run: |
-          shred -u /tmp/deploy_key 2>/dev/null || rm -f /tmp/deploy_key || true
+          set -euo pipefail
 
-      - name: "🧾 Complete job"
+          # Slug dirs should be lowercase (qais-*)
+          bad=$(find public/labs -maxdepth 5 -type d -name 'qais-*' | grep -E '[A-Z]' || true)
+          if [ -n "$bad" ]; then
+            echo "::error ::Uppercase found in qais-* directory names:"
+            echo "$bad"
+            exit 1
+          fi
+
+          # resources/{notebooks,html} should exist for each lab slug (best-effort check)
+          # (doesn't fail if some labs intentionally omit html)
+          while IFS= read -r slugdir; do
+            if [ ! -d "$slugdir/resources/notebooks" ]; then
+              echo "::warning ::Missing resources/notebooks under: $slugdir"
+            fi
+            if [ ! -d "$slugdir/resources/html" ]; then
+              echo "::notice ::No resources/html under: $slugdir (OK if HTML is generated on server)"
+            fi
+          done < <(find public/labs -maxdepth 4 -type d -name 'qais-*-lab' -o -name 'qais-*' | sort -u)
+
+          echo "✅ Naming sanity completed."
+
+      - name: "🧾 Summary"
         shell: bash
-        run: echo "Public labs deploy complete"
+        run: |
+          echo "This workflow does NOT deploy."
+          echo "Server remains authoritative; GitHub is a mirror."

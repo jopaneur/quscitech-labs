@@ -1,18 +1,24 @@
-# Text files normalized to LF in repo
+# Normalize text to LF
 * text=auto eol=lf
 
-# Binary / not-to-be-normalized
-*.png binary
-*.jpg binary
-*.jpeg binary
-*.gif binary
-*.ico binary
-*.pdf binary
+# Explicit text types
+*.php   text eol=lf
+*.md    text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.js    text eol=lf
+*.sh    text eol=lf
+*.txt   text eol=lf
+
+# Binary (never normalize)
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
 *.ipynb binary
-*.zip binary
-*.7z binary
-*.tar binary
-*.gz binary
-*.sh text eol=lf
-*.txt text eol=lf
-*.md  text eol=lf
+*.zip   binary
+*.7z    binary
+*.tar   binary
+*.gz    binary

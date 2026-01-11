@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>QAIS Lab · Bell State — Correlated Outcomes</title>
+<style>
+  :root{ --ink:#e6efff; --bg:#0b0f14; --card:#0f1722; --accent:#ffa149; --line:#274060 }
+  body{ margin:0; font-family:Arial,Helvetica,sans-serif; color:var(--ink); background:var(--bg) }
+  main{ max-width:980px; margin:40px auto; padding:0 18px }
+  h1{ color:var(--accent); font-size:1.6rem; margin:14px 0 10px }
+  p{ margin:0 0 10px }
+  .card{ background:var(--card); border:1px solid rgba(255,255,255,.09); border-radius:10px; padding:14px; margin:14px 0 }
+  .qst-table{ width:100%; border-collapse:collapse; margin-top:8px }
+  .qst-table th,.qst-table td{ border:1px solid rgba(255,255,255,.14); padding:8px; text-align:left }
+  .note{ color:#c9d4ea; font-size:.95rem }
+  canvas{ width:100%; max-width:720px; height:360px; border:1px solid var(--line); border-radius:8px; background:#0e1c2b }
+  img{ max-width:100%; border:1px solid var(--line); border-radius:8px }
+  code{ background:#0e1c2b; padding:2px 6px; border-radius:4px }
+</style>
+</head>
+<body>
+<main>
+  <h1>Bell State — Correlated Outcomes (|Φ⁺⟩, Z-basis)</h1>
+
+  <div class="card">
+    <p>
+      This beginner lab shows how Bell pairs measured in the same Z basis produce
+      <em>correlated</em> bits. We simulate 1,000 pairs from |Φ⁺⟩
+      and add a small flip noise ε to mimic imperfections. Counts and the
+      correlation coefficient are computed client-side; a static PNG fallback is available.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Results</h2>
+    <div id="results" role="region" aria-label="Outcome table"></div>
+  </div>
+
+  <div class="card">
+    <h2>Chart</h2>
+    <canvas id="bellChart" width="800" height="420" aria-label="Bar chart of outcome counts"></canvas>
+    <p class="note">If scripts are disabled, a static preview is shown below.</p>
+    <noscript><img src="../assets/images/bell_demo_counts.png" alt="Bell outcomes (static)"></noscript>
+    <div id="imgFallback" hidden>
+      <img src="../assets/images/bell_demo_counts.png" alt="Bell outcomes (static)">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Data</h2>
+    <p>Example CSV (used by the offline exporter): <code>assets/data/bell_demo_counts.csv</code></p>
+  </div>
+</main>
+
+<script src="../assets/code/bell_correlated_sim.js"></script>
+<script>
+  // If the canvas path fails on some browsers, reveal the PNG fallback.
+  window.addEventListener('error', () => {
+    const fb = document.getElementById('imgFallback');
+    if (fb) fb.hidden = false;
+  }, { once:true });
+</script>
+</body>
+</html>
+

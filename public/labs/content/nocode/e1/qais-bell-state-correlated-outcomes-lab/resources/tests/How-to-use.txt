@@ -1,0 +1,17 @@
+How to use
+
+(Optional) Build the fallback PNG
+
+cd public/labs/Beginner_Labs/qais-bell-state-correlated-outcomes-lab/resources/assets/code
+python export_bell_plot.py
+
+
+Open the lab
+
+Double-click resources/html/qais-bell-state-correlated-outcomes-lab.html
+or serve the resources/ folder with any static server.
+
+CI hook (optional)
+
+Reuse the YAML snippet I gave earlier for the Angle-Encoding lab:
+install matplotlib → run export_bell_plot.py → commit/update PNG before deploy.

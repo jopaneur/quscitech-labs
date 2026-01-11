@@ -1,100 +1,55 @@
 <?php
+/**
+ * Public Labs Landing (E1 only)
+ * E2/E3 are restricted to verified book buyers and instructors.
+ */
 declare(strict_types=1);
-
-require_once $_SERVER['DOCUMENT_ROOT'] . '/dev/includes/access.php';
-
-$prefix = qst_path_prefix();
-$role   = qst_current_role();
-
-$tracks = [
-  [
-    'id' => 'E.1',
-    'title' => 'E.1 Beginner Labs (No-Code)',
-    'desc' => 'Guided execution labs for readers without programming.',
-    'required' => 'book_buyer',
-    'href' => $prefix . '/labs/e1/',
-  ],
-  [
-    'id' => 'E.2',
-    'title' => 'E.2 Intermediate Labs (No-Code)',
-    'desc' => 'Deeper experimentation with controlled variations and metrics.',
-    'required' => 'book_buyer',
-    'href' => $prefix . '/labs/e2/',
-  ],
-  [
-    'id' => 'E.3',
-    'title' => 'E.3 Advanced Labs (No-Code)',
-    'desc' => 'Stress-tests, evaluation, and system-level exploration.',
-    'required' => 'book_buyer',
-    'href' => $prefix . '/labs/e3/',
-  ],
-];
-
-function qst_track_cta(array $t): array {
-    $required = $t['required'];
-    $href     = $t['href'];
-    $role     = qst_current_role();
-
-    if (qst_has_role($required)) {
-        return [
-            'label' => 'Open Track',
-            'href'  => $href,
-            'note'  => ($role === 'instructor') ? 'Instructor role detected (full access).' : 'Unlocked.',
-        ];
-    }
-
-    return [
-        'label' => 'Unlock with Book Code',
-        'href'  => qst_url('/labs/unlock/?return=' . rawurlencode($href)),
-        'note'  => 'Premium: requires book-buyer access.',
-    ];
-}
-?>
-<!doctype html>
+function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
+?><!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>QuSciTech Labs (DEV) — Reader Portal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QuSciTech Labs — Public</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#0b1220;color:#e8eefc}
-    .wrap{max-width:980px;margin:0 auto;padding:22px}
-    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .badge{display:inline-block;padding:4px 10px;border-radius:999px;background:#1a2b55;border:1px solid #2a3b68}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:16px}
-    .card{background:#121a2d;border:1px solid #223055;border-radius:14px;padding:16px}
-    .muted{color:#a7b6df}
-    a.btn{display:inline-block;padding:10px 12px;border-radius:10px;border:1px solid #3d57a0;background:#1a2b55;color:#e8eefc;text-decoration:none}
-    .note{margin-top:10px;color:#a7b6df;font-size:0.92rem}
+    :root { color-scheme: dark; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0b0f14; color:#e6edf3;}
+    .wrap { max-width: 980px; margin: 0 auto; padding: 34px 18px 60px; }
+    h1 { font-size: 34px; margin: 0 0 6px; }
+    .sub { color:#9aa4af; font-size: 14px; margin: 0 0 18px; }
+    .card { background:#0f1620; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.25); margin-bottom:14px;}
+    .k { color:#c7d1db; font-size:12px; letter-spacing:.06em; text-transform:uppercase; margin:0 0 6px;}
+    .t { font-size:18px; font-weight:700; margin:0 0 8px;}
+    .p { color:#a6b3c2; margin:0 0 12px; }
+    a.btn{ display:inline-block; padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.14); text-decoration:none; color:#e6edf3; font-weight:700; font-size:13px; }
+    a.btn.primary{ border-color: rgba(255,183,77,.45); box-shadow: 0 0 0 2px rgba(255,183,77,.08) inset; }
+    .locked{ opacity:.85; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="top">
-      <div>
-        <div class="badge">DEV</div>
-        <h1 style="margin:10px 0 6px">QuSciTech Labs — Reader Portal</h1>
-        <div class="muted">Current role: <strong><?php echo htmlspecialchars(qst_current_role(), ENT_QUOTES); ?></strong></div>
-      </div>
-      <div class="muted">
-        <a class="btn" href="<?php echo htmlspecialchars(qst_url('/labs/unlock/'), ENT_QUOTES); ?>">Unlock</a>
-      </div>
+    <h1>QuSciTech Labs — Public</h1>
+    <p class="sub">Public access includes E1 (Beginner / No‑Code). E2/E3 are restricted.</p>
+
+    <div class="card">
+      <div class="k">E1 — Beginner (Public)</div>
+      <div class="t">E.1 — Beginner Labs (No‑Code)</div>
+      <p class="p">Foundational quantum concepts delivered as no‑code notebook experiences. View rendered notebooks in-browser, or download the .ipynb.</p>
+      <a class="btn primary" href="/labs/e1/">Open E1</a>
     </div>
 
-    <div class="grid">
-      <?php foreach ($tracks as $t): $cta = qst_track_cta($t); ?>
-        <div class="card">
-          <div class="badge"><?php echo htmlspecialchars($t['id'], ENT_QUOTES); ?></div>
-          <h2 style="margin:10px 0 6px"><?php echo htmlspecialchars($t['title'], ENT_QUOTES); ?></h2>
-          <div class="muted"><?php echo htmlspecialchars($t['desc'], ENT_QUOTES); ?></div>
-          <div style="margin-top:12px">
-            <a class="btn" href="<?php echo htmlspecialchars($cta['href'], ENT_QUOTES); ?>">
-              <?php echo htmlspecialchars($cta['label'], ENT_QUOTES); ?>
-            </a>
-          </div>
-          <div class="note"><?php echo htmlspecialchars($cta['note'], ENT_QUOTES); ?></div>
-        </div>
-      <?php endforeach; ?>
+    <div class="card locked">
+      <div class="k">E2 — Intermediate (Restricted)</div>
+      <div class="t">E.2 — Intermediate Labs</div>
+      <p class="p">Restricted to verified book buyers and instructors.</p>
+      <a class="btn" href="/labs/e1/">See Public Labs</a>
+    </div>
+
+    <div class="card locked">
+      <div class="k">E3 — Advanced (Restricted)</div>
+      <div class="t">E.3 — Advanced Labs</div>
+      <p class="p">Restricted to verified book buyers and instructors.</p>
+      <a class="btn" href="/labs/e1/">See Public Labs</a>
     </div>
   </div>
 </body>

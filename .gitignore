@@ -64,3 +64,10 @@ public/labs/**/resources/notebooks/backup/
 !public/labs/Beginner_Labs/
 !public/labs/Intermediate_Labs/
 !public/labs/Advanced_Labs/
+
+# SIA noise
+**/_archive/
+**/error_log
+**/_php_error.log
+.DS_Store
+Thumbs.db

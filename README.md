@@ -10,6 +10,18 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17212825.svg)](https://doi.org/10.5281/zenodo.17212825)
 
+## Companion Website
+The official companion site for this repository is:
+https://quscitech.com
+This repository supports the book:
+
+**Quantum AI Systems: Theory, Architecture, and Applications**
+Author: Dr. Joe Wilson  
+Publisher: QuSciTech Press  
+
+DOI Reference:  
+https://doi.org/10.5281/zenodo.18955801
+
 - Public distribution repository for *Quantum AI Systems: Theory, Architecture, and Applications*  
 - By **Dr. Joe Wilson — © 2025 All Rights Reserved** • Publisher: **QuSciTech Press™**
 + **Public Distribution Repository** for  

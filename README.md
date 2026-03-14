@@ -6,9 +6,9 @@
 [Private Repo](https://github.com/jopaneur/quscitech-labs-full) •
 [QuSciTech.com](https://www.quscitech.com) •
 [Amazon KDP](https://www.amazon.com/dp/placeholder) •
-[DOI](https://doi.org/10.5281/zenodo.17212825)
+[DOI](https://doi.org/10.5281/zenodo.18955801)
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17212825.svg)](https://doi.org/10.5281/zenodo.17212825)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18955801.svg)](https://doi.org/10.5281/zenodo.18955801)
 
 ## Companion Website
 The official companion site for this repository is:
@@ -37,15 +37,15 @@ This repo hosts:
 
 ## ⚙️ Access Tiers (Aligned to Appendix E)
 
-### 🟢 Beginner Labs (E.1) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17212825.svg)](https://doi.org/10.5281/zenodo.17212825)
+### 🟢 Beginner Labs (E.1) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18955801.svg)](https://doi.org/10.5281/zenodo.18955801)
 Public No‑Code labs introducing superposition, entanglement, encoding, depth/noise sensitivity, and teleportation.  
 ➡️ Explore → [Beginner_Labs/no-code](Beginner_Labs/no-code)
 
-### 🔵 Intermediate Labs (E.2) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17212825.svg)](https://doi.org/10.5281/zenodo.17212825)
+### 🔵 Intermediate Labs (E.2) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18955801.svg)](https://doi.org/10.5281/zenodo.18955801)
 Preview‑only stubs covering optimization, control, and secure communication.  
 ➡️ Preview → [Intermediate_Labs/no-code](Intermediate_Labs/no-code)
 
-### 🟣 Advanced Labs (E.3) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17212825.svg)](https://doi.org/10.5281/zenodo.17212825)
+### 🟣 Advanced Labs (E.3) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18955801.svg)](https://doi.org/10.5281/zenodo.18955801)
 Preview‑only stubs highlighting QAIS‑scale architectures, benchmarking, and trust analysis.  
 ➡️ Preview → [Advanced_Labs/no-code](Advanced_Labs/no-code)
 
@@ -69,7 +69,7 @@ Please include:
 After verification, you will receive a GitHub invitation to join the private repository:  
 👉 https://github.com/jopaneur/quscitech-labs-full
 
-**Official DOI:** https://doi.org/10.5281/zenodo.17212825  
+**Official DOI:** https://doi.org/10.5281/zenodo.18955801  
 © 2025 Dr. Joe Wilson — QuSciTech™. All rights reserved.
 
 ---
@@ -88,6 +88,6 @@ After verification, you will receive a GitHub invitation to join the private rep
 ## 💳 Full Edition (KDP)
 Full **Code‑Enabled** and expanded **No‑Code** editions available via **Amazon KDP** *(link at release)*.
 
-**Official DOI:** [10.5281/zenodo.17212825](https://doi.org/10.5281/zenodo.17212825)  
+**Official DOI:** [10.5281/zenodo.18955801](https://doi.org/10.5281/zenodo.18955801)  
 **Companion Repository:** quscitech-labs  
 **Publisher:** QuSciTech Press™

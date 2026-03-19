@@ -34,7 +34,7 @@ QR_TARGETS = {
     "qr-labs-e3.svg": "https://quscitech.com/instructors/QST-INST-2025/resources/labs/e3/",
 
     # Concept DOI for the full lab collection
-    "qr-labs-doi.svg": "https://doi.org/10.5281/zenodo.17212825",
+    "qr-labs-doi.svg": "https://doi.org/10.5281/zenodo.18955801",
 }
 
 

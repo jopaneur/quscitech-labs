@@ -10,7 +10,7 @@ Preflight QA checker for quscitech-labs.
 import json, pathlib, re
 
 ROOT = pathlib.Path(".").resolve()
-DOI_KEY = "zenodo.17212825"
+DOI_KEY = "zenodo.18955801"
 
 # === 1. Naming check ===
 def check_filenames():

@@ -15,9 +15,9 @@ FOOTER_MD = """
 If referencing this repository or its companion materials, please cite:
 
 > **Wilson, J. (2025).** *Quantum AI Systems — Theory, Architecture, and Applications: Companion Labs (QuSciTech-Labs).*
-> QuSciTech Press. Zenodo. [https://doi.org/10.5281/zenodo.17212825](https://doi.org/10.5281/zenodo.17212825)
+> QuSciTech Press. Zenodo. [https://doi.org/10.5281/zenodo.18955801](https://doi.org/10.5281/zenodo.18955801)
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17212825.svg)](https://doi.org/10.5281/zenodo.17212825)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18955801.svg)](https://doi.org/10.5281/zenodo.18955801)
 
 © 2025 **Dr. Joe Wilson** — All Rights Reserved
 **QuSciTech Press** | [www.quscitech.com](https://www.quscitech.com)
@@ -36,7 +36,7 @@ def find_notebooks(root: pathlib.Path, patterns):
 
 def has_footer(nb):
     for cell in nb.get("cells", []):
-        if "zenodo.17212825" in "".join(cell.get("source", [])):
+        if "zenodo.18955801" in "".join(cell.get("source", [])):
             return True
     return False
 

@@ -12,7 +12,7 @@ abstract: >
   representational, adaptive, and deployment architectures
   underlying Quantum Artificial Intelligence Systems (QAIS).
 
-publisher: QuSciTech Press
+publisher: "QuSciTech Press"
 
 repository-code: "https://github.com/jopaneur/quscitech-labs"
 

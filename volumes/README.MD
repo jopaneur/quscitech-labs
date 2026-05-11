@@ -17,3 +17,9 @@ Quantum machine learning, variational optimization, adaptive control, and hybrid
 
 ### Volume IV — Information, Systems, and Deployment
 Communication systems, sensing infrastructures, governance frameworks, resilience engineering, and operational deployment architectures.
+
+## Public and Restricted Resources
+
+This repository serves as the public archival and companion-resource environment for the QAIS series.
+
+Expanded laboratory environments, instructional systems, assessment resources, and restricted companion materials are provided separately through the QuSciTech instructional platform.

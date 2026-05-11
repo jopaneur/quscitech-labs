@@ -15,7 +15,7 @@ The official companion site for this repository is:
 https://quscitech.com
 This repository supports the book:
 
-**Quantum AI Systems: Theory, Architecture, and Applications**
+**Quantum AI Systems: Theory, Architectures, and Applications**
 Author: Dr. Joe Wilson  
 Publisher: QuSciTech Press  
 

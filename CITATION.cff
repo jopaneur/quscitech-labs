@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: "Quantum AI Systems (QAIS)"
+message: "If you use this repository, please cite the QAIS series DOI."
+authors:
+  - family-names: Wilson
+    given-names: Joe
+version: 1.0
+doi: 10.5281/zenodo.18955800
+repository-code: https://github.com/jopaneur/quscitech-labs
+license: CC-BY-NC-ND-4.0

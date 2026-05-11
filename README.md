@@ -1,93 +1,135 @@
-# QuSciTech-Labs 
+Quantum AI Systems: Theory, Architectures, and Applications
 
-[Public Labs](https://github.com/jopaneur/quscitech-labs) •
-[Docs / Index](docs/Labs_INDEX_README.md) •
-[Full Edition Access (KDP)](#-full-edition-kdp) •
-[Private Repo](https://github.com/jopaneur/quscitech-labs-full) •
-[QuSciTech.com](https://www.quscitech.com) •
-[Amazon KDP](https://www.amazon.com/dp/placeholder) •
-[DOI](https://doi.org/10.5281/zenodo.18955801)
+Public archival repository and companion-resource platform supporting the scholarly QAIS series:
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18955801.svg)](https://doi.org/10.5281/zenodo.18955801)
+Quantum AI Systems: Theory, Architectures, and Applications
 
-## Companion Website
-The official companion site for this repository is:
+By Dr. Joe Wilson
+Published by QuSciTech Press
+
+Companion Website
+
+Official QAIS platform:
+
 https://quscitech.com
-This repository supports the book:
 
-**Quantum AI Systems: Theory, Architectures, and Applications**
-Author: Dr. Joe Wilson  
-Publisher: QuSciTech Press  
+Official DOI (Concept DOI):
 
-DOI Reference:  
-https://doi.org/10.5281/zenodo.18955801
+https://doi.org/10.5281/zenodo.18955800
 
-- Public distribution repository for *Quantum AI Systems: Theory, Architecture, and Applications*  
-- By **Dr. Joe Wilson — © 2025 All Rights Reserved** • Publisher: **QuSciTech Press™**
-+ **Public Distribution Repository** for  
-+ *Quantum AI Systems: Theory, Architecture, and Applications*  
-+ by **Dr. Joe Wilson — © 2025 All Rights Reserved** • Publisher: **QuSciTech Press™**
+GitHub Repository:
 
-This repo hosts:
-- 🟢 **Beginner Labs (E.1)** — Public **No‑Code** notebooks with precomputed outputs.
-- 🔵 **Intermediate Labs (E.2)** — **Preview stubs** only (KDP for full editions).
-- 🟣 **Advanced Labs (E.3)** — **Preview stubs** only (KDP for full editions).
+https://github.com/jopaneur/quscitech-labs
 
----
+QAIS Series Overview
 
-## ⚙️ Access Tiers (Aligned to Appendix E)
+This repository supports the four-volume scholarly series:
 
-### 🟢 Beginner Labs (E.1) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18955801.svg)](https://doi.org/10.5281/zenodo.18955801)
-Public No‑Code labs introducing superposition, entanglement, encoding, depth/noise sensitivity, and teleportation.  
-➡️ Explore → [Beginner_Labs/no-code](Beginner_Labs/no-code)
+Volume I — Foundations of Quantum AI Systems
 
-### 🔵 Intermediate Labs (E.2) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18955801.svg)](https://doi.org/10.5281/zenodo.18955801)
-Preview‑only stubs covering optimization, control, and secure communication.  
-➡️ Preview → [Intermediate_Labs/no-code](Intermediate_Labs/no-code)
+Develops the physical, mathematical, and operational foundations underlying scalable Quantum Artificial Intelligence Systems (QAIS), including quantum states, qubits, superposition, entanglement, quantum gates, circuits, measurement systems, decoherence, and noise-aware architectures.
 
-### 🟣 Advanced Labs (E.3) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18955801.svg)](https://doi.org/10.5281/zenodo.18955801)
-Preview‑only stubs highlighting QAIS‑scale architectures, benchmarking, and trust analysis.  
-➡️ Preview → [Advanced_Labs/no-code](Advanced_Labs/no-code)
+Volume II — Quantum Representation and Reasoning
 
----
+Develops the representational and reasoning layers of QAIS architectures, including quantum encoding, semantic structure, probabilistic inference, representational architectures, and propagation-aware computational reasoning.
 
-## 🔐 Full Edition Access (KDP Purchasers)
+Volume III — Quantum Learning and System Architectures
 
-📄 For detailed access instructions, see  
-[Support_Template_Public.txt](docs/Support_Template_Public.txt)
+Examines adaptive learning, optimization, trainable quantum systems, variational architectures, feedback control, and hybrid quantum–classical intelligent learning frameworks.
 
-Readers who purchase *Quantum AI Systems: Theory, Architecture, and Applications* on Amazon KDP are eligible for full access to the complete **QuSciTech-Labs Full Edition** (Beginner, Intermediate, and Advanced; code + no-code).
+Volume IV — Information, Systems, and Deployment
 
-🧾 **Access Request Form:** https://forms.gle/your_form_id_here
+Investigates communication systems, sensing infrastructures, governance frameworks, resilience engineering, interoperability, and operational deployment architectures for scalable distributed QAIS ecosystems.
 
-Please include:
-- Your name  
-- Email address (**GitHub username preferred** for invitation access)  
-- Amazon KDP order ID or proof of purchase  
-- Confirmation that you agree to the access and redistribution policy  
+Public and Restricted Resources
 
-After verification, you will receive a GitHub invitation to join the private repository:  
-👉 https://github.com/jopaneur/quscitech-labs-full
+This repository serves as the public archival and companion-resource environment for the QAIS series.
 
-**Official DOI:** https://doi.org/10.5281/zenodo.18955801  
-© 2025 Dr. Joe Wilson — QuSciTech™. All rights reserved.
+The repository includes:
 
----
+Public laboratory materials
+Companion instructional resources
+DOI-linked archival materials
+Preview instructional content
+Documentation and reference resources
+Public reproducibility assets
 
+Additional instructional systems, expanded laboratories, assessments, and restricted materials are provided separately through the QuSciTech instructional platform.
 
-## 🧭 Repository Overview
+Laboratory Access Structure
+🟢 E.1 Beginner Laboratories
 
-| Tier | Folder | Contents |
-|------|--------|----------|
-| E.1 — Beginner | `Beginner_Labs/no-code/` | **Public** No‑Code notebooks (upload 5 files) |
-| E.2 — Intermediate | `Intermediate_Labs/no-code/` | Preview **README** only |
-| E.3 — Advanced | `Advanced_Labs/no-code/` | Preview **README** only |
+Public no-code and introductory laboratories supporting foundational QAIS concepts, including:
 
----
+superposition
+entanglement
+encoding
+teleportation
+noise-aware systems
+quantum information propagation
 
-## 💳 Full Edition (KDP)
-Full **Code‑Enabled** and expanded **No‑Code** editions available via **Amazon KDP** *(link at release)*.
+Public beginner materials are available through GitHub and Google Colab for reproducible experimentation.
 
-**Official DOI:** [10.5281/zenodo.18955801](https://doi.org/10.5281/zenodo.18955801)  
-**Companion Repository:** quscitech-labs  
-**Publisher:** QuSciTech Press™
+🔵 E.2 Intermediate Laboratories
+
+Intermediate instructional environments supporting:
+
+optimization analysis
+representational modeling
+hybrid workflows
+adaptive architectures
+reasoning-system experimentation
+
+Restricted access through verified instructional channels.
+
+🟣 E.3 Advanced Laboratories
+
+Advanced systems-oriented laboratories supporting:
+
+scalable QAIS architectures
+distributed systems analysis
+benchmarking
+resilience engineering
+governance experimentation
+deployment modeling
+
+Restricted access through approved instructional and research programs.
+
+Companion Repository Structure
+Directory	Description
+volumes/	Volume-specific companion materials
+docs/	Instructional documentation and indexes
+public/	Public laboratory assets and reproducibility resources
+tools/	Helper utilities and infrastructure scripts
+helpers/	Internal workflow and validation helpers
+Access and Instructional Platform
+
+Expanded instructional systems, companion laboratories, guided exercises, and assessment resources are available through:
+
+https://quscitech.com
+
+Instructor and institutional access information:
+
+https://quscitech.com/instructors/access/
+
+Laboratory access requests:
+
+https://quscitech.com/labs/request-code.php
+
+Citation and Scholarly Record
+
+Canonical DOI (Concept DOI):
+
+https://doi.org/10.5281/zenodo.18955800
+
+Please use the Concept DOI for scholarly citation and long-term reference.
+
+Version-specific DOIs are assigned automatically through Zenodo archival releases.
+
+License and Rights
+
+© 2026 Dr. Joe Wilson — All Rights Reserved.
+
+Published by QuSciTech Press.
+
+This repository contains public companion materials and archival resources supporting the QAIS scholarly series. Redistribution of restricted instructional materials, expanded laboratory systems, or proprietary companion resources is prohibited except as authorized by the publisher.

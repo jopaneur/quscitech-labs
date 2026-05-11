@@ -1,24 +1,28 @@
 cff-version: 1.2.0
-title: "Quantum AI Systems: Theory, Architectures, and Applications"
 message: "If you use this work, please cite the QAIS series using the metadata below."
-type: book
+
+title: "Quantum AI Systems: Theory, Architectures, and Applications"
 
 authors:
-  - family-names: Wilson
-    given-names: Joe
+  - family-names: "Wilson"
+    given-names: "Joe"
 
 abstract: >
   A four-volume scholarly series examining the physical,
   representational, adaptive, and deployment architectures
   underlying Quantum Artificial Intelligence Systems (QAIS).
 
-publisher: "QuSciTech Press"
+type: software
 
-repository-code: "https://github.com/jopaneur/quscitech-labs"
+version: "1.0"
+
+doi: "10.5281/zenodo.18955800"
+
+date-released: 2025-11-15
 
 url: "https://doi.org/10.5281/zenodo.18955800"
 
-doi: "10.5281/zenodo.18955800"
+repository-code: "https://github.com/jopaneur/quscitech-labs"
 
 keywords:
   - quantum information science
@@ -27,3 +31,5 @@ keywords:
   - quantum computing
   - quantum machine learning
   - systems engineering
+
+license: "All Rights Reserved"
